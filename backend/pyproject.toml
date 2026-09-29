@@ -47,7 +47,7 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 # assert, тестовые пароли и чтение окружения в тестах допустимы
 "tests/**" = ["S101", "S105", "S106", "TID251"]
 # имена файлов миграций начинаются с даты
-"migrations/versions/**" = ["N999"]
+"src/grocery/migrations/versions/**" = ["N999"]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "os.environ".msg = "Настройки читаются только через grocery.config.get_settings() (ADR-0006)"
@@ -58,14 +58,14 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 strict = true
 python_version = "3.14"
 plugins = ["pydantic.mypy"]
-files = ["src", "tests", "migrations"]
-# tests/ и migrations/ — не пакеты: имена модулей считаются от src/ и backend/,
+files = ["src", "tests"]
+# tests/ — не пакет: имена модулей считаются от src/ и backend/,
 # иначе несколько conftest.py конфликтуют.
 explicit_package_bases = true
 mypy_path = ["src", "."]
 # Имена файлов миграций начинаются с даты и содержат «-» — это не имена модулей.
 # Миграции проверяются stairway-тестом (ADR-0011).
-exclude = ["^migrations/versions/"]
+exclude = ["^src/grocery/migrations/versions/"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

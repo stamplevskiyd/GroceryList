@@ -44,11 +44,11 @@ GroceryList/
 ```
 backend/
 ├── pyproject.toml, uv.lock, .python-version, alembic.ini
-├── migrations/              env.py, versions/                               ADR-0013
 ├── src/grocery/
 │   ├── __main__.py          python -m grocery create-user | export-openapi
 │   ├── main.py              create_app(), lifespan: движок БД, MCP session_manager, push-воркер
 │   ├── config.py            Settings, get_settings()                        ADR-0006
+│   ├── migrations/          env.py, script.py.mako, versions/               ADR-0013
 │   │
 │   ├── api/                 ── адаптеры REST ──
 │   │   ├── deps.py          authenticate, AppSourceDep, db_unit_of_work
@@ -84,6 +84,11 @@ backend/
 ```
 
 Размещение, которое легко перепутать:
+
+- `migrations/` — внутри пакета `grocery`, на одном уровне с остальным кодом (как в Superset);
+  `alembic.ini` находит их через ресурс пакета (`script_location = grocery:migrations`), поэтому
+  миграции есть и в установленном пакете в Docker-образе. Слоям import-linter пакет не
+  подчиняется, как `config` и `main`.
 
 - `domain/enums.py` — в нижнем слое: перечисления нужны и моделям (`db`), и схемам.
 - `mcp_server/verifier.py` — в адаптере, а не в `services/auth`: он реализует интерфейс MCP SDK,

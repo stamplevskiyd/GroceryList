@@ -1,0 +1,72 @@
+"""Настройки: переменные <ГРУППА>_<ПОЛЕ>, ошибки конфигурации, .env.example (ADR-0006)."""
+
+from pathlib import Path
+
+import pytest
+from pydantic import BaseModel, ValidationError
+
+from grocery.config import Settings, get_settings
+from tests.support import REPO_ROOT
+
+
+@pytest.fixture(autouse=True)
+def _no_dotenv(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    # Settings читает .env из рабочей директории — изолируемся от локального файла разработчика.
+    monkeypatch.chdir(tmp_path)
+
+
+def test_reads_groups_with_single_underscore(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_PUBLIC_URL", "https://grocery.example")
+    monkeypatch.setenv("APP_LOG_LEVEL", "DEBUG")
+    monkeypatch.setenv("DB_URL", "postgresql+asyncpg://user:secret@db:5432/grocery")
+
+    settings = Settings()
+
+    assert settings.app.public_url.host == "grocery.example"
+    assert settings.app.log_level == "DEBUG"
+    assert settings.app.version == "dev"
+    assert settings.db.url.hosts()[0]["host"] == "db"
+
+
+def test_missing_group_names_the_field(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("DB_URL", raising=False)
+
+    with pytest.raises(ValidationError) as exc_info:
+        Settings()
+
+    assert "db" in {error["loc"][0] for error in exc_info.value.errors()}
+
+
+def test_invalid_value_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_PUBLIC_URL", "not a url")
+
+    with pytest.raises(ValidationError) as exc_info:
+        Settings()
+
+    assert ("app", "public_url") in {error["loc"] for error in exc_info.value.errors()}
+
+
+def test_get_settings_is_cached() -> None:
+    assert get_settings() is get_settings()
+
+
+def _env_names() -> list[str]:
+    names = []
+    for group_name, group_field in Settings.model_fields.items():
+        group_model = group_field.annotation
+        assert isinstance(group_model, type)
+        assert issubclass(group_model, BaseModel)
+        names += [f"{group_name}_{field}".upper() for field in group_model.model_fields]
+    return names
+
+
+def test_group_names_have_no_underscore() -> None:
+    # env_nested_max_split=1 делит имя по первому «_» — в имени группы его быть не должно.
+    assert all("_" not in group for group in Settings.model_fields)
+
+
+def test_env_example_lists_every_setting() -> None:
+    lines = (REPO_ROOT / ".env.example").read_text(encoding="utf-8").splitlines()
+    declared = {line.split("=", 1)[0] for line in lines if "=" in line and not line.startswith("#")}
+
+    assert set(_env_names()) <= declared

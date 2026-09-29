@@ -151,3 +151,34 @@ async def test_duplicate_username_raises_and_rolls_back() -> None:
 async def test_repository_outside_unit_of_work_raises() -> None:
     with pytest.raises(RuntimeError, match="unit_of_work"):
         await user_repo.add(_user("anna"))
+
+
+class _UserRename(BaseModel):
+    login: str | None = None
+
+    # mypy не поддерживает декораторы поверх @property; так рекомендует pydantic.
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def username(self) -> str | None:
+        # None — «не менялось»: исходное поле не передано.
+        return None if self.login is None else self.login.strip().lower()
+
+
+class _RenameRepository(Repository[User, UserCreate, _UserRename]):
+    exclude_on_write: ClassVar[frozenset[str]] = frozenset({"login"})
+
+
+async def test_update_writes_computed_fields_derived_from_passed_values() -> None:
+    async with unit_of_work():
+        user = await user_repo.add(_user("anna"))
+        await _RenameRepository(User).update(user, _UserRename(login="  Boris "))
+
+    assert user.username == "boris"
+
+
+async def test_update_skips_computed_fields_that_are_none() -> None:
+    async with unit_of_work():
+        user = await user_repo.add(_user("anna"))
+        await _RenameRepository(User).update(user, _UserRename())
+
+    assert user.username == "anna"

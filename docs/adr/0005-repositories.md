@@ -30,7 +30,7 @@ class Repository[M: Base, C: BaseModel, U: BaseModel]:
         return obj
 
     async def update(self, obj: M, data: U) -> M:
-        values = data.model_dump(exclude_unset=True, exclude=self.exclude_on_write)
+        values = _values(data, exclude=self.exclude_on_write, only_set=True)
         for field, value in values.items():
             setattr(obj, field, value)
         await get_current_session().flush()
@@ -41,7 +41,11 @@ class Repository[M: Base, C: BaseModel, U: BaseModel]:
 
 - `add` принимает Pydantic-схему создания; `**extra` — поля, которых нет во входной схеме и
   которые задаёт сервис (`shopping_list_id`, `sources`).
-- `update` принимает схему с частичными полями и меняет только переданные (`exclude_unset`).
+- `update` принимает схему с частичными полями и меняет только переданные. Вычисляемые поля
+  (`computed_field`, например `name_normalized`) пишутся, если их значение не `None`: в схемах
+  обновления вычисляемое поле возвращает `None`, когда исходное поле не передано.
+- `add` / `add_all` пишут все поля схемы, включая вычисляемые; вложенные Pydantic-объекты
+  передаются как объекты (их сериализует тип колонки, ADR-0013).
 - Методы для коллекций: `get_by_ids`, `delete_by_ids`, `add_all`. Суффиксы `_list` и `_many` не
   используются — «list» в проекте занят списком покупок (`ShoppingList`).
 - Сессия — из `get_current_session()` (ADR-0004); в конструктор не передаётся.

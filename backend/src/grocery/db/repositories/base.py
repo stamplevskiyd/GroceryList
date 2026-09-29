@@ -19,13 +19,19 @@ def _values(data: BaseModel, *, exclude: frozenset[str], only_set: bool) -> dict
 
     Вложенные Pydantic-объекты остаются объектами (их сериализует тип колонки), вычисляемые
     поля (computed_field) включаются — через них схемы передают нормализованные значения.
+    При частичном обновлении (only_set) вычисляемое поле пишется, только если оно не None:
+    в схемах обновления None означает «исходное поле не передано».
     """
     schema = type(data)
-    if only_set:
-        names = set(data.model_fields_set)
-    else:
-        names = set(schema.model_fields) | set(schema.model_computed_fields)
-    return {name: getattr(data, name) for name in names - exclude}
+    if not only_set:
+        names = (set(schema.model_fields) | set(schema.model_computed_fields)) - exclude
+        return {name: getattr(data, name) for name in names}
+    values = {name: getattr(data, name) for name in data.model_fields_set - exclude}
+    for name in set(schema.model_computed_fields) - exclude:
+        value = getattr(data, name)
+        if value is not None:
+            values[name] = value
+    return values
 
 
 class Repository[M: Entity, C: BaseModel, U: BaseModel]:

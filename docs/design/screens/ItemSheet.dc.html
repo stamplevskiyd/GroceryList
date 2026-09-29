@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Карточка позиции</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&family=Onest:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+.gl-light{--bg:#FFFFFF;--surface:#FFFFFF;--surface-2:#F2F2F4;--ink:#1C1C1E;--ink-2:#5B5B60;--ink-3:#6E6E73;--line:#E5E5EA;--accent:#9C6500;--accent-fill:#FFCC00;--accent-soft:#FFF6D1;--on-accent:#1C1C1E;--ai:#5856D6;--ai-soft:#EEEEFB;--danger:#C4291C;--danger-soft:#FDE7E5;--on-danger:#FFFFFF;--fresh:#FFF0A8;--scrim:rgba(0,0,0,.35);--shadow:0 1px 2px rgba(0,0,0,.05),0 10px 30px rgba(0,0,0,.12)}
+.gl-dark{--bg:#000000;--surface:#1C1C1E;--surface-2:#2C2C2E;--ink:#F2F2F7;--ink-2:#AEAEB2;--ink-3:#98989D;--line:#38383A;--accent:#FFD60A;--accent-fill:#FFD60A;--accent-soft:#332B00;--on-accent:#1C1C1E;--ai:#A5A4FF;--ai-soft:#25244A;--danger:#FF6961;--danger-soft:#3A1A18;--on-danger:#1C1C1E;--fresh:#3D3510;--scrim:rgba(0,0,0,.6);--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.5)}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+input::placeholder,textarea::placeholder{color:var(--ink-3)}
+</style>
+</helmet>
+<div class="{{theme}}" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: var(--bg); color: var(--ink); font-family: Onest, system-ui, sans-serif">
+
+<div aria-hidden="true" style="display: flex; flex-direction: column; padding: 52px 0 0">
+<div style="padding: 0 16px 14px; font-family: Literata, Georgia, serif; font-size: 32px; font-weight: 600">Покупки</div>
+<div style="display: flex; align-items: center; gap: 14px; height: 60px; padding: 0 16px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line)"><span style="width: 22px; height: 22px; box-sizing: border-box; border: 2px solid var(--ink-3); border-radius: 50%"></span><span style="flex-grow: 1; font-size: 17px; font-weight: 500">Молоко</span><span style="color: var(--ink-2)">1 л</span></div>
+<div style="display: flex; align-items: center; gap: 14px; height: 60px; padding: 0 16px; border-bottom: 1px solid var(--line)"><span style="width: 22px; height: 22px; box-sizing: border-box; border: 2px solid var(--ink-3); border-radius: 50%"></span><span style="flex-grow: 1; font-size: 17px; font-weight: 500">Спагетти</span><span style="color: var(--ink-2)">500 г</span></div>
+<div style="display: flex; align-items: center; gap: 14px; height: 60px; padding: 0 16px; border-bottom: 1px solid var(--line)"><span style="width: 22px; height: 22px; box-sizing: border-box; border: 2px solid var(--ink-3); border-radius: 50%"></span><span style="flex-grow: 1; font-size: 17px; font-weight: 500">Пармезан</span><span style="color: var(--ink-2)">100 г</span></div>
+</div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: var(--scrim)"></div>
+
+<section role="dialog" aria-modal="true" aria-labelledby="item-title" style="position: absolute; left: 0; right: 0; top: 96px; bottom: 0; display: flex; flex-direction: column; background: var(--surface); border-radius: 24px 24px 0 0; box-shadow: var(--shadow)">
+<div aria-hidden="true" style="width: 40px; height: 5px; margin: 8px auto 0; border-radius: 3px; background: var(--line)"></div>
+<div style="display: flex; align-items: center; padding: 4px 8px 0 20px">
+<h2 id="item-title" style="flex-grow: 1; margin: 0; font-family: Literata, Georgia, serif; font-size: 22px; font-weight: 600">Позиция</h2>
+<a href="Main.dc.html" aria-label="Закрыть" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 22px; color: var(--ink-2)">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+</a>
+</div>
+
+<div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; padding: 8px 20px 0">
+<label style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 500; color: var(--ink-2)">Название</span>
+<input value="Пармезан" style="height: 50px; box-sizing: border-box; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); font-family: inherit; font-size: 17px; font-weight: 500; color: var(--ink)">
+</label>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 500; color: var(--ink-2)">Количество</span>
+<input value="100" inputmode="decimal" style="height: 50px; box-sizing: border-box; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); font-family: inherit; font-size: 17px; color: var(--ink); font-variant-numeric: tabular-nums">
+</label>
+<div role="radiogroup" aria-label="Единица" style="display: flex; flex-wrap: wrap; gap: 6px">
+<button type="button" role="radio" aria-checked="true" style="height: 40px; min-width: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--accent-fill); background: var(--accent-fill); color: var(--on-accent); font-family: inherit; font-size: 15px; font-weight: 500">г</button>
+<button type="button" role="radio" aria-checked="false" style="height: 40px; min-width: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-family: inherit; font-size: 15px; font-weight: 500">кг</button>
+<button type="button" role="radio" aria-checked="false" style="height: 40px; min-width: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-family: inherit; font-size: 15px; font-weight: 500">мл</button>
+<button type="button" role="radio" aria-checked="false" style="height: 40px; min-width: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-family: inherit; font-size: 15px; font-weight: 500">л</button>
+<button type="button" role="radio" aria-checked="false" style="height: 40px; min-width: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-family: inherit; font-size: 15px; font-weight: 500">шт</button>
+<button type="button" role="radio" aria-checked="false" style="height: 40px; min-width: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-family: inherit; font-size: 15px; font-weight: 500">уп</button>
+<button type="button" role="radio" aria-checked="false" style="height: 40px; padding: 0 12px; border-radius: 10px; border: 1px dashed var(--ink-3); background: transparent; color: var(--ink-2); font-family: inherit; font-size: 15px; font-weight: 500">Своя…</button>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="tag-input" style="font-size: 13px; font-weight: 500; color: var(--ink-2)">Теги</label>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 50px; box-sizing: border-box; padding: 6px 8px; border: 2px solid var(--accent); border-radius: 12px; background: var(--surface-2)">
+<span style="height: 32px; display: inline-flex; align-items: center; gap: 2px; padding: 0 2px 0 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; font-weight: 500">Молочное<button type="button" aria-label="Убрать тег «Молочное»" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 0; background: none; color: var(--ink-3); padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+<span style="height: 32px; display: inline-flex; align-items: center; gap: 2px; padding: 0 2px 0 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; font-weight: 500">Для карбонары<button type="button" aria-label="Убрать тег «Для карбонары»" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 0; background: none; color: var(--ink-3); padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+<input id="tag-input" value="Сы" autocomplete="off" style="flex-grow: 1; min-width: 80px; height: 32px; border: 0; outline: none; background: transparent; font-family: inherit; font-size: 15px; color: var(--ink)">
+</div>
+<div role="listbox" aria-label="Подсказки тегов" style="display: flex; flex-wrap: wrap; gap: 6px">
+<button type="button" role="option" aria-selected="false" style="height: 36px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-family: inherit; font-size: 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span><b style="font-weight: 600">Сы</b>ры</span></button>
+<button type="button" role="option" aria-selected="false" style="height: 36px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 18px; border: 1px dashed var(--ink-3); background: transparent; color: var(--ink-2); font-family: inherit; font-size: 14px">Создать «Сы»</button>
+</div>
+</div>
+
+<label style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 500; color: var(--ink-2)">Заметка</span>
+<textarea rows="2" style="box-sizing: border-box; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); font-family: inherit; font-size: 15px; line-height: 1.4; color: var(--ink); resize: none">Parmigiano Reggiano, выдержка от 24 месяцев</textarea>
+</label>
+
+<div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2)">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="var(--ai)" aria-hidden="true"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"></path></svg>
+<span>Добавил Claude сегодня в 14:32 · «Для карбонары»</span>
+</div>
+</div>
+
+<div style="display: flex; gap: 10px; padding: 16px 20px 30px">
+<button type="button" style="height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 18px; border: 0; border-radius: 14px; background: var(--danger-soft); color: var(--danger); font-family: inherit; font-size: 16px; font-weight: 600">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>Удалить</button>
+<a href="Main.dc.html" style="flex-grow: 1; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 14px; background: var(--accent-fill); color: var(--on-accent); font-size: 16px; font-weight: 600; text-decoration: none">Готово</a>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: (this.props.dark ?? false) ? 'gl-dark' : 'gl-light' };
+  }
+}
+</script>
+</body>
+</html>

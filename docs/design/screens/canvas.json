@@ -1,0 +1,175 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "ByTagsDark.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "По тегам — тёмная",
+      "w": 390,
+      "x": 0,
+      "y": 3524
+    },
+    "Empty.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Пустой список",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "InstallIOS.dc.html": {
+      "h": 844,
+      "title": "Установка на iOS",
+      "w": 390,
+      "x": 1880,
+      "y": 1204
+    },
+    "ItemSheet.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Карточка позиции",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "ItemSheetDark.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Карточка — тёмная",
+      "w": 390,
+      "x": 470,
+      "y": 3524
+    },
+    "Login.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Вход",
+      "w": 390,
+      "x": 940,
+      "y": 1204
+    },
+    "LoginDark.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Вход — тёмная",
+      "w": 390,
+      "x": 940,
+      "y": 3524
+    },
+    "Main.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Список — интерактив",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "OAuthConsent.dc.html": {
+      "h": 844,
+      "title": "Согласие OAuth",
+      "w": 390,
+      "x": 1410,
+      "y": 1204
+    },
+    "Settings.dc.html": {
+      "h": 1960,
+      "is_interactive": true,
+      "title": "Настройки",
+      "w": 390,
+      "x": 0,
+      "y": 1204
+    },
+    "TagConfirm.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Теги — подтверждение",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "Tags.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Теги",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "TokenCreated.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Новый токен",
+      "w": 390,
+      "x": 470,
+      "y": 1204
+    },
+    "Tokens.dc.html": {
+      "h": 1120,
+      "title": "Токены и компоненты",
+      "w": 1280,
+      "x": 0,
+      "y": 4728
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-29T12:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "rowDark": {
+      "kind": "title1",
+      "maxW": 1330,
+      "text": "Тёмная тема",
+      "w": 240,
+      "x": 0,
+      "y": 3224
+    },
+    "rowList": {
+      "kind": "title1",
+      "maxW": 2270,
+      "text": "Список покупок",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "rowSettings": {
+      "kind": "title1",
+      "maxW": 2270,
+      "text": "Настройки и доступ",
+      "w": 240,
+      "x": 0,
+      "y": 904
+    },
+    "rowTokens": {
+      "kind": "title1",
+      "maxW": 1280,
+      "text": "Токены и компоненты",
+      "w": 240,
+      "x": 0,
+      "y": 4428
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Empty.dc.html",
+    "ItemSheet.dc.html",
+    "Tags.dc.html",
+    "TagConfirm.dc.html",
+    "Settings.dc.html",
+    "TokenCreated.dc.html",
+    "Login.dc.html",
+    "OAuthConsent.dc.html",
+    "InstallIOS.dc.html",
+    "ByTagsDark.dc.html",
+    "ItemSheetDark.dc.html",
+    "LoginDark.dc.html",
+    "Tokens.dc.html"
+  ],
+  "pages": [],
+  "title": "GroceryList PWA"
+}

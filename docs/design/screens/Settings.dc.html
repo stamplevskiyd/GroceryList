@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Настройки</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&family=Onest:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+.gl-light{--bg:#FFFFFF;--surface:#FFFFFF;--surface-2:#F2F2F4;--ink:#1C1C1E;--ink-2:#5B5B60;--ink-3:#6E6E73;--line:#E5E5EA;--accent:#9C6500;--accent-fill:#FFCC00;--accent-soft:#FFF6D1;--on-accent:#1C1C1E;--ai:#5856D6;--ai-soft:#EEEEFB;--danger:#C4291C;--danger-soft:#FDE7E5;--on-danger:#FFFFFF;--fresh:#FFF0A8;--scrim:rgba(0,0,0,.35);--shadow:0 1px 2px rgba(0,0,0,.05),0 10px 30px rgba(0,0,0,.12)}
+.gl-dark{--bg:#000000;--surface:#1C1C1E;--surface-2:#2C2C2E;--ink:#F2F2F7;--ink-2:#AEAEB2;--ink-3:#98989D;--line:#38383A;--accent:#FFD60A;--accent-fill:#FFD60A;--accent-soft:#332B00;--on-accent:#1C1C1E;--ai:#A5A4FF;--ai-soft:#25244A;--danger:#FF6961;--danger-soft:#3A1A18;--on-danger:#1C1C1E;--fresh:#3D3510;--scrim:rgba(0,0,0,.6);--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.5)}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+summary{list-style:none;cursor:pointer}summary::-webkit-details-marker{display:none}
+details[open] .gl-chev{transform:rotate(180deg)}
+</style>
+</helmet>
+<div class="{{theme}}" style="position: relative; width: 390px; height: 1960px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px; padding: 44px 16px 40px; background: var(--bg); color: var(--ink); font-family: Onest, system-ui, sans-serif">
+
+<header style="display: flex; flex-direction: column; gap: 4px">
+<a href="Main.dc.html" style="align-self: flex-start; height: 44px; display: flex; align-items: center; gap: 2px; margin-left: -8px; padding: 0 10px 0 4px; border-radius: 22px; font-size: 16px; font-weight: 500; text-decoration: none">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>Список</a>
+<h1 style="margin: 0; font-family: Literata, Georgia, serif; font-size: 32px; font-weight: 600; letter-spacing: -0.01em">Настройки</h1>
+</header>
+
+<section aria-labelledby="s-push" style="display: flex; flex-direction: column; gap: 10px">
+<h2 id="s-push" style="margin: 0 4px; font-family: Literata, Georgia, serif; font-size: 20px; font-weight: 600">Уведомления</h2>
+<div style="display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden">
+<div style="display: flex; align-items: center; gap: 12px; padding: 14px 14px 14px 16px">
+<span style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"></path><path d="M10 20.5a2 2 0 0 0 4 0"></path></svg></span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span id="push-label" style="font-size: 16px; font-weight: 500">На этом устройстве</span><span style="font-size: 13px; line-height: 1.4; color: var(--ink-2)">Когда ассистент или другое устройство меняет список</span></span>
+<button type="button" role="switch" aria-checked="true" aria-labelledby="push-label" style="flex-shrink: 0; width: 52px; height: 32px; padding: 3px; border: 0; border-radius: 16px; background: var(--accent-fill); display: flex; justify-content: flex-end"><span style="width: 26px; height: 26px; border-radius: 13px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,.25)"></span></button>
+</div>
+<div style="padding: 12px 16px 4px; border-top: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--ink-2)">Устройства</div>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 6px 14px 6px 16px">
+<span style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--ink-2)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.5"></rect><path d="M11 18h2"></path></svg></span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">iPhone</span><span style="font-size: 13px; color: var(--accent); font-weight: 500">Это устройство</span></span>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 6px 12px 10px 16px">
+<span style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--ink-2)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="11" rx="1.5"></rect><path d="M2 19h20"></path></svg></span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">MacBook · Safari</span><span style="font-size: 13px; color: var(--ink-2)">Последнее уведомление 2 дня назад</span></span>
+<button type="button" style="height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: none; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--danger)">Удалить</button>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="s-connect" style="display: flex; flex-direction: column; gap: 10px">
+<h2 id="s-connect" style="margin: 0 4px; font-family: Literata, Georgia, serif; font-size: 20px; font-weight: 600">Подключить ассистента</h2>
+<div style="display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 16px">
+<span style="font-size: 13px; font-weight: 600; color: var(--ink-2)">Адрес MCP-сервера</span>
+<div style="display: flex; align-items: center; gap: 4px; height: 50px; padding: 0 4px 0 14px; border-radius: 12px; background: var(--surface-2)">
+<code style="flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 14px; color: var(--ink)">https://s157254.love-is.nexus/mcp</code>
+<button type="button" aria-label="Скопировать адрес" style="flex-shrink: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; background: none; color: var(--accent)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M15 9V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h4"></path></svg></button>
+</div>
+</div>
+
+<details open style="border-top: 1px solid var(--line)">
+<summary style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 14px 0 16px">
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px; font-weight: 500">claude.ai</span><span style="font-size: 13px; color: var(--ink-2)">Веб и мобильное приложение · вход через OAuth</span></span>
+<svg class="gl-chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transition: transform .2s ease"><path d="M6 9l6 6 6-6"></path></svg>
+</summary>
+<ol style="margin: 0; padding: 0 16px 16px 40px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.45; color: var(--ink)">
+<li>Откройте «Настройки → Коннекторы» и добавьте свой коннектор.</li>
+<li>Вставьте адрес сервера, указанный выше.</li>
+<li>Войдите в GroceryList и нажмите «Разрешить».</li>
+</ol>
+</details>
+<details style="border-top: 1px solid var(--line)">
+<summary style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 14px 0 16px">
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px; font-weight: 500">ChatGPT</span><span style="font-size: 13px; color: var(--ink-2)">Вход через OAuth</span></span>
+<svg class="gl-chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transition: transform .2s ease"><path d="M6 9l6 6 6-6"></path></svg>
+</summary>
+<ol style="margin: 0; padding: 0 16px 16px 40px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.45">
+<li>В настройках коннекторов ChatGPT создайте новый.</li>
+<li>Вставьте адрес сервера и выберите вход через OAuth.</li>
+<li>Войдите в GroceryList и нажмите «Разрешить».</li>
+</ol>
+</details>
+<details open style="border-top: 1px solid var(--line)">
+<summary style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 14px 0 16px">
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px; font-weight: 500">Claude Code</span><span style="font-size: 13px; color: var(--ink-2)">OAuth или персональный токен</span></span>
+<svg class="gl-chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transition: transform .2s ease"><path d="M6 9l6 6 6-6"></path></svg>
+</summary>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 0 16px 16px">
+<span style="font-size: 15px; line-height: 1.45">Выполните в терминале:</span>
+<code style="display: block; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px; line-height: 1.5; color: var(--ink); word-break: break-all">claude mcp add --transport http grocery https://s157254.love-is.nexus/mcp</code>
+<span style="font-size: 13px; line-height: 1.45; color: var(--ink-2)">При первом вызове откроется браузер для входа. Без браузера — используйте персональный токен ниже.</span>
+</div>
+</details>
+<details style="border-top: 1px solid var(--line)">
+<summary style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 14px 0 16px">
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px; font-weight: 500">Codex CLI</span><span style="font-size: 13px; color: var(--ink-2)">OAuth или персональный токен</span></span>
+<svg class="gl-chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transition: transform .2s ease"><path d="M6 9l6 6 6-6"></path></svg>
+</summary>
+<div style="padding: 0 16px 16px; font-size: 15px; line-height: 1.45">Добавьте сервер в конфигурацию Codex: [ИНСТРУКЦИЯ ДЛЯ CODEX]</div>
+</details>
+</div>
+</section>
+
+<section aria-labelledby="s-apps" style="display: flex; flex-direction: column; gap: 10px">
+<h2 id="s-apps" style="margin: 0 4px; font-family: Literata, Georgia, serif; font-size: 20px; font-weight: 600">Подключённые приложения</h2>
+<div style="display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden">
+<div style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px 8px 16px">
+<span aria-hidden="true" style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 18px; display: flex; align-items: center; justify-content: center; background: var(--ai-soft); color: var(--ai); font-weight: 600">C</span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">Claude</span><span style="font-size: 13px; color: var(--ink-2)">Подключено 12 сентября</span></span>
+<button type="button" style="height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: none; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--danger)">Отключить</button>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px 8px 16px; border-top: 1px solid var(--line)">
+<span aria-hidden="true" style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 18px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--ink-2); font-weight: 600">G</span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">ChatGPT</span><span style="font-size: 13px; color: var(--ink-2)">Подключено 20 сентября</span></span>
+<button type="button" style="height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: none; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--danger)">Отключить</button>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="s-tokens" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 4px; margin: 0 4px">
+<h2 id="s-tokens" style="margin: 0; font-family: Literata, Georgia, serif; font-size: 20px; font-weight: 600">Персональные токены</h2>
+<p style="margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-2)">Для клиентов, которые подключаются без браузера. Токен показывается один раз.</p>
+</div>
+<div style="display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden">
+<div style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px 8px 16px">
+<span style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--ink-2)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l9-9M16 7l3 3"></path></svg></span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">Claude Code — MacBook</span><span style="font-size: 13px; color: var(--ink-2)">Создан 14 сент. · использован сегодня</span></span>
+<button type="button" style="height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: none; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--danger)">Отозвать</button>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px 8px 16px; border-top: 1px solid var(--line)">
+<span style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--ink-2)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l9-9M16 7l3 3"></path></svg></span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 500">Codex CLI</span><span style="font-size: 13px; color: var(--ink-2)">Создан 22 сент. · ещё не использовался</span></span>
+<button type="button" style="height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: none; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--danger)">Отозвать</button>
+</div>
+<div style="padding: 12px 16px 16px; border-top: 1px solid var(--line)">
+<a href="TokenCreated.dc.html" style="height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; background: var(--surface-2); color: var(--ink); font-size: 15px; font-weight: 600; text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Создать токен</a>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="s-account" style="display: flex; flex-direction: column; gap: 10px">
+<h2 id="s-account" style="margin: 0 4px; font-family: Literata, Georgia, serif; font-size: 20px; font-weight: 600">Аккаунт</h2>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px 8px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface)">
+<span style="flex-grow: 1; font-size: 15px; color: var(--ink-2)">Вы вошли как <b style="font-weight: 600; color: var(--ink)">[логин]</b></span>
+<a href="Login.dc.html" style="height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 10px; background: var(--danger-soft); color: var(--danger); font-size: 14px; font-weight: 600; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"></path></svg>Выйти</a>
+</div>
+</section>
+
+<p style="margin: 0; text-align: center; font-size: 13px; color: var(--ink-3)">GroceryList · версия 1.0</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":1960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: (this.props.dark ?? false) ? 'gl-dark' : 'gl-light' };
+  }
+}
+</script>
+</body>
+</html>

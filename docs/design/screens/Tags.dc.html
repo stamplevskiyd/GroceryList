@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Теги</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&family=Onest:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+.gl-light{--bg:#FFFFFF;--surface:#FFFFFF;--surface-2:#F2F2F4;--ink:#1C1C1E;--ink-2:#5B5B60;--ink-3:#6E6E73;--line:#E5E5EA;--accent:#9C6500;--accent-fill:#FFCC00;--accent-soft:#FFF6D1;--on-accent:#1C1C1E;--ai:#5856D6;--ai-soft:#EEEEFB;--danger:#C4291C;--danger-soft:#FDE7E5;--on-danger:#FFFFFF;--fresh:#FFF0A8;--scrim:rgba(0,0,0,.35);--shadow:0 1px 2px rgba(0,0,0,.05),0 10px 30px rgba(0,0,0,.12)}
+.gl-dark{--bg:#000000;--surface:#1C1C1E;--surface-2:#2C2C2E;--ink:#F2F2F7;--ink-2:#AEAEB2;--ink-3:#98989D;--line:#38383A;--accent:#FFD60A;--accent-fill:#FFD60A;--accent-soft:#332B00;--on-accent:#1C1C1E;--ai:#A5A4FF;--ai-soft:#25244A;--danger:#FF6961;--danger-soft:#3A1A18;--on-danger:#1C1C1E;--fresh:#3D3510;--scrim:rgba(0,0,0,.6);--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.5)}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+.gl-scroll{scrollbar-width:none}.gl-scroll::-webkit-scrollbar{display:none}
+button:disabled{cursor:default}
+@keyframes glIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+<div class="{{theme}}" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); color: var(--ink); font-family: Onest, system-ui, sans-serif">
+
+<header style="display: flex; flex-direction: column; gap: 4px; padding: 44px 16px 14px">
+<a href="Main.dc.html" style="align-self: flex-start; height: 44px; display: flex; align-items: center; gap: 2px; margin-left: -8px; padding: 0 10px 0 4px; border-radius: 22px; font-size: 16px; font-weight: 500; text-decoration: none">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>Список</a>
+<h1 style="margin: 0; font-family: Literata, Georgia, serif; font-size: 32px; font-weight: 600; letter-spacing: -0.01em">Теги</h1>
+<p style="margin: 4px 0 0; font-size: 14px; line-height: 1.45; color: var(--ink-2)">Отделы магазина, рецепты — что угодно. Теги создаются сами, когда вы их назначаете.</p>
+</header>
+
+<main class="gl-scroll" style="flex-grow: 1; min-height: 0; overflow-y: auto; border-top: 1px solid var(--line); padding-bottom: 40px">
+<ul style="margin: 0; padding: 0; list-style: none">
+<sc-for list="{{tags}}" as="t" hint-placeholder-count="7">
+<li style="position: relative; border-bottom: 1px solid var(--line)">
+
+<div style="display: flex; align-items: center; gap: 4px; min-height: 64px; padding: 0 8px 0 6px">
+<button type="button" onClick="{{t.toggle}}" aria-expanded="{{t.open}}" disabled="{{t.empty}}" aria-label="{{t.toggleLabel}}" style="flex-grow: 1; min-width: 0; min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 8px; border: 0; border-radius: 12px; background: none; font-family: inherit; text-align: left; color: var(--ink); cursor: pointer">
+<span aria-hidden="true" style="flex-shrink: 0; width: 30px; height: 30px; border-radius: 15px; display: flex; align-items: center; justify-content: center; background: {{t.chevBg}}; color: {{t.chevFg}}; transition: background-color .2s ease">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="transform: {{t.chevRot}}; transition: transform .2s ease"><path d="M9 6l6 6-6 6"></path></svg>
+</span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 17px; font-weight: {{t.weight}}; color: {{t.nameColor}}">{{t.name}}</span>
+<span style="font-size: 13px; color: var(--ink-2)">{{t.countText}}</span>
+</span>
+</button>
+<button type="button" onClick="{{t.menu}}" aria-label="Действия с тегом «{{t.name}}»" aria-haspopup="menu" aria-expanded="{{t.menuOpen}}" style="flex-shrink: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 22px; background: {{t.menuBg}}; color: var(--accent); cursor: pointer">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="19" cy="12" r="1.9"></circle></svg>
+</button>
+</div>
+
+<sc-if value="{{t.renaming}}" hint-placeholder-val="{{false}}">
+<form onSubmit="{{t.saveName}}" style="display: flex; align-items: center; gap: 8px; padding: 0 12px 12px 56px">
+<label style="flex-grow: 1; min-width: 0; height: 46px; display: flex; align-items: center; padding: 0 12px; border: 2px solid var(--accent); border-radius: 12px; background: var(--surface-2)">
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Новое название тега</span>
+<input value="{{draft}}" onChange="{{onDraft}}" autocomplete="off" style="flex-grow: 1; min-width: 0; border: 0; outline: none; background: transparent; font-family: inherit; font-size: 16px; color: var(--ink)">
+</label>
+<button type="submit" style="height: 46px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--accent-fill); color: var(--on-accent); font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Готово</button>
+</form>
+</sc-if>
+
+<sc-if value="{{t.open}}" hint-placeholder-val="{{false}}">
+<ul style="margin: 0; padding: 0 0 8px; list-style: none; animation: glIn .2s ease-out">
+<sc-for list="{{t.items}}" as="it" hint-placeholder-count="3">
+<li style="display: flex; align-items: center; gap: 12px; min-height: 48px; margin-left: 56px; padding-right: 16px; border-top: 1px solid var(--line)">
+<span aria-hidden="true" style="flex-shrink: 0; width: 20px; height: 20px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: {{it.boxBorder}}; background: {{it.boxBg}}; color: var(--on-accent)">
+<sc-if value="{{it.bought}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+</span>
+<a href="ItemSheet.dc.html" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 16px; text-decoration: {{it.deco}}; color: {{it.color}}">{{it.name}}
+<sc-if value="{{it.isAi}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--ai)" aria-label="добавил Claude"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"></path></svg></sc-if>
+</a>
+<span style="flex-shrink: 0; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; text-decoration: {{it.deco}}">{{it.qty}}</span>
+</li>
+</sc-for>
+</ul>
+</sc-if>
+
+<sc-if value="{{t.menuOpen}}" hint-placeholder-val="{{false}}">
+<div role="menu" aria-label="Действия с тегом «{{t.name}}»" style="position: absolute; right: 10px; top: 54px; z-index: 20; width: 272px; display: flex; flex-direction: column; padding: 6px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); animation: glIn .15s ease-out">
+<button type="button" role="menuitem" onClick="{{t.rename}}" style="height: 46px; display: flex; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: 10px; background: none; font-family: inherit; font-size: 16px; color: var(--ink); text-align: left; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg>Переименовать</button>
+<sc-if value="{{t.hasOpenItems}}" hint-placeholder-val="{{true}}">
+<button type="button" role="menuitem" onClick="{{t.markAll}}" style="height: 46px; display: flex; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: 10px; background: none; font-family: inherit; font-size: 16px; color: var(--ink); text-align: left; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l3 3 5-6"></path></svg>Отметить все купленными</button>
+</sc-if>
+<div role="separator" style="height: 1px; margin: 4px 8px; background: var(--line)"></div>
+<sc-if value="{{t.hasItems}}" hint-placeholder-val="{{true}}">
+<a role="menuitem" href="TagConfirm.dc.html" style="height: 46px; display: flex; align-items: center; gap: 12px; padding: 0 12px; border-radius: 10px; font-size: 16px; color: var(--danger); text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>Удалить все позиции…</a>
+</sc-if>
+<button type="button" role="menuitem" onClick="{{t.removeTag}}" style="height: 46px; display: flex; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: 10px; background: none; font-family: inherit; font-size: 16px; color: var(--danger); text-align: left; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"></path><path d="M14 14l4 4M18 14l-4 4"></path></svg>Удалить тег, позиции оставить</button>
+</div>
+</sc-if>
+</li>
+</sc-for>
+</ul>
+</main>
+
+<sc-if value="{{anyMenu}}" hint-placeholder-val="{{false}}">
+<button type="button" aria-label="Закрыть меню" onClick="{{closeMenu}}" style="position: absolute; inset: 0; z-index: 10; border: 0; padding: 0; background: transparent; cursor: default"></button>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tags: this.seed(), open: ['Для карбонары'], menu: 'Бакалея', renaming: null, draft: '' };
+  }
+  seed() {
+    return [
+      { name: 'Бакалея', items: [{ name: 'Спагетти', qty: '500 г', src: 'Claude' }, { name: 'Кофе в зёрнах', qty: '1 уп', bought: true }] },
+      { name: 'Выпечка', items: [{ name: 'Хлеб бородинский', qty: '1 шт' }] },
+      { name: 'Для карбонары', items: [{ name: 'Спагетти', qty: '500 г', src: 'Claude' }, { name: 'Гуанчале', qty: '200 г', src: 'Claude' }, { name: 'Пармезан', qty: '100 г', src: 'Claude' }] },
+      { name: 'Для плова', items: [] },
+      { name: 'Дом', items: [{ name: 'Бумажные полотенца', qty: '2 уп' }] },
+      { name: 'Молочное', items: [{ name: 'Молоко', qty: '1 л' }, { name: 'Яйца', qty: '10 шт' }, { name: 'Пармезан', qty: '100 г', src: 'Claude' }] },
+      { name: 'Мясо', items: [{ name: 'Гуанчале', qty: '200 г', src: 'Claude' }] },
+      { name: 'Овощи и фрукты', items: [{ name: 'Яблоки', qty: '1,5 кг' }, { name: 'Лимоны', qty: '2 шт', src: 'ChatGPT' }, { name: 'Бананы', qty: '1 кг', bought: true }] }
+    ];
+  }
+  plural(n) {
+    var m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return 'позиция';
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'позиции';
+    return 'позиций';
+  }
+  toggle(name) {
+    this.setState((s) => ({ menu: null, open: s.open.indexOf(name) >= 0 ? s.open.filter((x) => x !== name) : s.open.concat([name]) }));
+  }
+  markAll(name) {
+    this.setState((s) => ({ menu: null, tags: s.tags.map((t) => t.name === name ? Object.assign({}, t, { items: t.items.map((it) => Object.assign({}, it, { bought: true })) }) : t) }));
+  }
+  saveName(e, name) {
+    if (e && e.preventDefault) e.preventDefault();
+    var next = this.state.draft.trim();
+    if (!next) return this.setState({ renaming: null });
+    this.setState((s) => ({
+      renaming: null,
+      tags: s.tags.map((t) => t.name === name ? Object.assign({}, t, { name: next }) : t),
+      open: s.open.map((x) => x === name ? next : x)
+    }));
+  }
+  renderVals() {
+    var s = this.state;
+    var tags = s.tags.map((t) => {
+      var open = s.open.indexOf(t.name) >= 0 && t.items.length > 0;
+      var bought = t.items.filter((it) => it.bought).length;
+      var n = t.items.length;
+      var countText = n === 0 ? 'Нет позиций · остаётся в подсказках' : n + ' ' + this.plural(n) + (bought ? ' · ' + bought + ' куплено' : '');
+      return {
+        name: t.name,
+        countText: countText,
+        empty: n === 0,
+        open: open,
+        hasItems: n > 0,
+        hasOpenItems: n - bought > 0,
+        menuOpen: s.menu === t.name,
+        renaming: s.renaming === t.name,
+        toggleLabel: open ? 'Свернуть «' + t.name + '»' : 'Показать позиции «' + t.name + '»',
+        chevBg: open ? 'var(--accent-fill)' : 'var(--surface-2)',
+        chevFg: n === 0 ? 'var(--line)' : (open ? 'var(--on-accent)' : 'var(--ink-2)'),
+        chevRot: open ? 'rotate(90deg)' : 'none',
+        weight: open ? '600' : '500',
+        nameColor: n === 0 ? 'var(--ink-2)' : 'var(--ink)',
+        menuBg: s.menu === t.name ? 'var(--accent-soft)' : 'transparent',
+        items: t.items.map((it) => ({
+          name: it.name,
+          qty: it.qty,
+          bought: !!it.bought,
+          isAi: !!it.src,
+          boxBorder: it.bought ? '0' : '2px solid var(--ink-3)',
+          boxBg: it.bought ? 'var(--accent-fill)' : 'transparent',
+          deco: it.bought ? 'line-through' : 'none',
+          color: it.bought ? 'var(--ink-3)' : 'var(--ink)'
+        })),
+        toggle: () => this.toggle(t.name),
+        menu: () => this.setState({ menu: s.menu === t.name ? null : t.name }),
+        rename: () => this.setState({ menu: null, renaming: t.name, draft: t.name }),
+        markAll: () => this.markAll(t.name),
+        removeTag: () => this.setState((st) => ({ menu: null, tags: st.tags.filter((x) => x.name !== t.name) })),
+        saveName: (e) => this.saveName(e, t.name)
+      };
+    });
+    return {
+      theme: (this.props.dark ?? false) ? 'gl-dark' : 'gl-light',
+      tags: tags,
+      anyMenu: !!s.menu,
+      closeMenu: () => this.setState({ menu: null }),
+      draft: s.draft,
+      onDraft: (e) => this.setState({ draft: e.target.value })
+    };
+  }
+}
+</script>
+</body>
+</html>

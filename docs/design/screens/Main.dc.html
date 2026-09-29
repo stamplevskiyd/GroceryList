@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Список покупок</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&family=Onest:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+.gl-light{--bg:#FFFFFF;--surface:#FFFFFF;--surface-2:#F2F2F4;--ink:#1C1C1E;--ink-2:#5B5B60;--ink-3:#6E6E73;--line:#E5E5EA;--accent:#9C6500;--accent-fill:#FFCC00;--accent-soft:#FFF6D1;--on-accent:#1C1C1E;--ai:#5856D6;--ai-soft:#EEEEFB;--danger:#C4291C;--danger-soft:#FDE7E5;--on-danger:#FFFFFF;--fresh:#FFF0A8;--scrim:rgba(0,0,0,.35);--shadow:0 1px 2px rgba(0,0,0,.05),0 10px 30px rgba(0,0,0,.12)}
+.gl-dark{--bg:#000000;--surface:#1C1C1E;--surface-2:#2C2C2E;--ink:#F2F2F7;--ink-2:#AEAEB2;--ink-3:#98989D;--line:#38383A;--accent:#FFD60A;--accent-fill:#FFD60A;--accent-soft:#332B00;--on-accent:#1C1C1E;--ai:#A5A4FF;--ai-soft:#25244A;--danger:#FF6961;--danger-soft:#3A1A18;--on-danger:#1C1C1E;--fresh:#3D3510;--scrim:rgba(0,0,0,.6);--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.5)}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+.gl-scroll{scrollbar-width:none}.gl-scroll::-webkit-scrollbar{display:none}
+@keyframes glIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+input::placeholder,textarea::placeholder{color:var(--ink-3)}
+</style>
+</helmet>
+<div class="{{theme}}" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); color: var(--ink); font-family: Onest, system-ui, sans-serif">
+
+<header style="display: flex; flex-direction: column; gap: 12px; padding: 52px 16px 10px; background: {{navBg}}">
+<div style="display: flex; align-items: center; gap: 2px">
+<h1 style="flex-grow: 1; margin: 0; font-family: Literata, Georgia, serif; font-size: 32px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; color: {{navTitle}}">Покупки</h1>
+<a href="Tags.dc.html" aria-label="Теги" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 22px; color: {{navFg}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"></path><circle cx="7.5" cy="7.5" r="1.4"></circle></svg>
+</a>
+<a href="Settings.dc.html" aria-label="Настройки" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 22px; color: {{navFg}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>
+</a>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="flex-grow: 1; font-size: 14px; color: {{navSub}}">{{summary}}</span>
+<div role="group" aria-label="Вид списка" style="display: flex; padding: 3px; border-radius: 12px; background: {{segTrack}}">
+<button type="button" onClick="{{showList}}" aria-pressed="{{isList}}" style="height: 34px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border: 0; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; background: {{segList.bg}}; color: {{segList.fg}}; box-shadow: {{segList.shadow}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"></path></svg>Списком</button>
+<button type="button" onClick="{{showTags}}" aria-pressed="{{isTags}}" style="height: 34px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border: 0; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; background: {{segTags.bg}}; color: {{segTags.fg}}; box-shadow: {{segTags.shadow}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"></rect><rect x="3" y="14" width="18" height="6" rx="1.5"></rect></svg>По тегам</button>
+</div>
+</div>
+</header>
+
+<nav aria-label="Фильтр по тегам" class="gl-scroll" style="display: flex; gap: 8px; overflow-x: auto; padding: 2px 16px 12px; flex-shrink: 0; background: {{navBg}}">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+<button type="button" onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="flex-shrink: 0; height: 40px; padding: 0 14px; display: flex; align-items: center; gap: 7px; border-radius: 20px; font-family: inherit; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; background: {{c.bg}}; color: {{c.fg}}; border: 1px solid {{c.border}}">{{c.name}}<span style="font-size: 12px; opacity: 0.7; font-variant-numeric: tabular-nums">{{c.count}}</span></button>
+</sc-for>
+</nav>
+
+<main class="gl-scroll" style="flex-grow: 1; min-height: 0; overflow-y: auto; border-top: 1px solid var(--line); padding-bottom: 96px">
+
+<sc-if value="{{allDone}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 40px 32px; text-align: center">
+<div style="font-family: Literata, Georgia, serif; font-size: 20px; font-weight: 600">Здесь всё куплено</div>
+<div style="font-size: 14px; color: var(--ink-2)">Добавьте позицию внизу или попросите ассистента</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isList}}" hint-placeholder-val="{{true}}">
+<div>
+<sc-for list="{{items}}" as="item" hint-placeholder-count="6">
+<div style="display: flex; align-items: center; gap: 2px; min-height: 60px; padding: 2px 16px 2px 6px; box-sizing: border-box; border-bottom: 1px solid var(--line); background-color: {{item.rowBg}}; transition: background-color 1.6s ease; animation: {{item.anim}}">
+<button type="button" onClick="{{item.toggle}}" aria-label="Отметить «{{item.name}}» купленным" style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; cursor: pointer">
+<span style="display: block; width: 22px; height: 22px; box-sizing: border-box; border: 2px solid var(--ink-3); border-radius: 50%"></span>
+</button>
+<a href="ItemSheet.dc.html" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 9px 0; color: var(--ink); text-decoration: none">
+<span style="display: flex; align-items: baseline; gap: 12px">
+<span style="flex-grow: 1; min-width: 0; font-size: 17px; font-weight: 500; line-height: 1.3">{{item.name}}</span>
+<span style="flex-shrink: 0; font-size: 15px; color: var(--ink-2); font-variant-numeric: tabular-nums">{{item.qtyText}}</span>
+</span>
+<sc-if value="{{item.hasMeta}}" hint-placeholder-val="{{true}}">
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+<sc-if value="{{item.isAi}}" hint-placeholder-val="{{false}}">
+<span style="display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px 0 6px; border-radius: 11px; background: var(--ai-soft); color: var(--ai); font-size: 12px; font-weight: 600"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"></path></svg>{{item.srcLabel}}</span>
+</sc-if>
+<sc-for list="{{item.chips}}" as="tag" hint-placeholder-count="1">
+<span style="height: 22px; line-height: 22px; padding: 0 8px; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); font-size: 12px; font-weight: 500">{{tag.name}}</span>
+</sc-for>
+<sc-if value="{{item.hasNote}}" hint-placeholder-val="{{false}}">
+<span style="font-size: 12px; color: var(--ink-3)">{{item.note}}</span>
+</sc-if>
+</span>
+</sc-if>
+</a>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{isTags}}" hint-placeholder-val="{{false}}">
+<div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+<section>
+<div style="display: flex; align-items: baseline; gap: 8px; padding: 20px 16px 6px">
+<h2 style="margin: 0; font-family: Literata, Georgia, serif; font-size: 19px; font-weight: 600">{{g.name}}</h2>
+<span style="font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums">{{g.count}}</span>
+</div>
+<sc-for list="{{g.items}}" as="item" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; gap: 2px; min-height: 56px; padding: 2px 16px 2px 6px; box-sizing: border-box; border-bottom: 1px solid var(--line); background-color: {{item.rowBg}}; transition: background-color 1.6s ease; animation: {{item.anim}}">
+<button type="button" onClick="{{item.toggle}}" aria-label="Отметить «{{item.name}}» купленным" style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; cursor: pointer">
+<span style="display: block; width: 22px; height: 22px; box-sizing: border-box; border: 2px solid var(--ink-3); border-radius: 50%"></span>
+</button>
+<a href="ItemSheet.dc.html" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 0; color: var(--ink); text-decoration: none">
+<span style="display: flex; align-items: baseline; gap: 12px">
+<span style="flex-grow: 1; min-width: 0; font-size: 17px; font-weight: 500; line-height: 1.3">{{item.name}}</span>
+<span style="flex-shrink: 0; font-size: 15px; color: var(--ink-2); font-variant-numeric: tabular-nums">{{item.qtyText}}</span>
+</span>
+<sc-if value="{{item.hasMeta}}" hint-placeholder-val="{{false}}">
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+<sc-if value="{{item.isAi}}" hint-placeholder-val="{{false}}">
+<span style="display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px 0 6px; border-radius: 11px; background: var(--ai-soft); color: var(--ai); font-size: 12px; font-weight: 600"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"></path></svg>{{item.srcLabel}}</span>
+</sc-if>
+<sc-for list="{{item.chips}}" as="tag" hint-placeholder-count="1">
+<span style="height: 22px; line-height: 22px; padding: 0 8px; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); font-size: 12px; font-weight: 500">{{tag.name}}</span>
+</sc-for>
+<sc-if value="{{item.hasNote}}" hint-placeholder-val="{{false}}">
+<span style="font-size: 12px; color: var(--ink-3)">{{item.note}}</span>
+</sc-if>
+</span>
+</sc-if>
+</a>
+</div>
+</sc-for>
+</section>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{hasBought}}" hint-placeholder-val="{{true}}">
+<section style="margin-top: 20px">
+<div style="display: flex; align-items: center; gap: 8px; padding: 0 8px 0 4px">
+<button type="button" onClick="{{toggleBought}}" aria-expanded="{{boughtOpen}}" style="flex-grow: 1; height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 0; background: none; font-family: inherit; font-size: 15px; font-weight: 600; color: var(--ink-2); cursor: pointer; text-align: left">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: {{chevron}}; transition: transform .2s ease"><path d="M6 9l6 6 6-6"></path></svg>
+Куплено · {{boughtCount}}</button>
+<button type="button" onClick="{{clearBought}}" style="height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--danger); cursor: pointer">Очистить купленное</button>
+</div>
+<sc-if value="{{boughtOpen}}" hint-placeholder-val="{{true}}">
+<div>
+<sc-for list="{{bought}}" as="item" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; gap: 2px; min-height: 52px; padding: 2px 16px 2px 6px; box-sizing: border-box; border-bottom: 1px solid var(--line)">
+<button type="button" onClick="{{item.toggle}}" aria-label="Вернуть «{{item.name}}» в список" style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; cursor: pointer">
+<span style="display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-fill); color: var(--on-accent)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+</button>
+<span style="flex-grow: 1; min-width: 0; font-size: 16px; color: var(--ink-3); text-decoration: line-through">{{item.name}}</span>
+<span style="flex-shrink: 0; font-size: 14px; color: var(--ink-3); text-decoration: line-through; font-variant-numeric: tabular-nums">{{item.qtyText}}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</section>
+</sc-if>
+</main>
+
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+<div role="status" style="position: absolute; left: 12px; right: 12px; bottom: 104px; display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--ink); color: var(--bg); box-shadow: var(--shadow); animation: glIn .3s ease-out">
+<span style="flex-shrink: 0; width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: var(--ai); color: #FFFFFF"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"></path></svg></span>
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span style="font-size: 15px; font-weight: 600">{{toastTitle}}</span>
+<span style="font-size: 13px; opacity: 0.75">{{toastBody}}</span>
+</span>
+</div>
+</sc-if>
+
+<form onSubmit="{{onAdd}}" style="flex-shrink: 0; display: flex; gap: 8px; padding: 10px 12px 30px; background: var(--surface); border-top: 1px solid var(--line)">
+<label style="flex-grow: 1; min-width: 0; height: 50px; display: flex; align-items: center; padding: 0 16px; border-radius: 14px; background: var(--surface-2)">
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Новая позиция</span>
+<input value="{{draft}}" onChange="{{onDraft}}" placeholder="Добавить: молоко 2 л" autocomplete="off" enterkeyhint="done" style="flex-grow: 1; min-width: 0; border: 0; outline: none; background: transparent; font-family: inherit; font-size: 16px; color: var(--ink)">
+</label>
+<button type="submit" aria-label="Добавить" style="flex-shrink: 0; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 14px; background: var(--accent-fill); color: var(--on-accent); cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+</button>
+</form>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"navbar":{"editor":"enum","options":["white","yellow"],"default":"white"},"view":{"editor":"enum","options":["list","tags"],"default":"list"},"live":{"editor":"boolean","default":true},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { items: this.seed(), selected: [], view: null, boughtOpen: true, draft: '', toastTitle: '', toastBody: '' };
+    this.nextId = 100;
+    this.timers = [];
+  }
+  componentDidMount() {
+    if (this.props.live ?? true) this.later(2200, () => this.assistantAdds());
+  }
+  componentWillUnmount() {
+    this.timers.forEach((t) => clearTimeout(t));
+    clearTimeout(this.toastTimer);
+  }
+  later(ms, fn) { this.timers.push(setTimeout(fn, ms)); }
+  seed() {
+    return [
+      { id: 1, name: 'Молоко', qty: 1000, unit: 'мл', tags: ['Молочное'] },
+      { id: 2, name: 'Хлеб бородинский', qty: 1, unit: 'шт', tags: ['Выпечка'] },
+      { id: 3, name: 'Яблоки', qty: 1500, unit: 'г', tags: ['Овощи и фрукты'] },
+      { id: 4, name: 'Яйца', qty: 10, unit: 'шт', tags: ['Молочное'], note: 'категория С0' },
+      { id: 5, name: 'Спагетти', qty: 500, unit: 'г', tags: ['Бакалея', 'Для карбонары'], src: 'Claude' },
+      { id: 6, name: 'Гуанчале', qty: 200, unit: 'г', tags: ['Мясо', 'Для карбонары'], src: 'Claude' },
+      { id: 7, name: 'Пармезан', qty: 100, unit: 'г', tags: ['Молочное', 'Для карбонары'], src: 'Claude' },
+      { id: 8, name: 'Лимоны', qty: 2, unit: 'шт', tags: ['Овощи и фрукты'], src: 'ChatGPT' },
+      { id: 9, name: 'Бумажные полотенца', qty: 2, unit: 'уп', tags: ['Дом'] },
+      { id: 10, name: 'Батарейки АА', qty: 4, unit: 'шт', tags: [] },
+      { id: 20, name: 'Кофе в зёрнах', qty: 1, unit: 'уп', tags: ['Бакалея'], bought: true },
+      { id: 21, name: 'Бананы', qty: 1000, unit: 'г', tags: ['Овощи и фрукты'], bought: true }
+    ];
+  }
+  norm(s) { return String(s).trim().replace(/\s+/g, ' ').toLowerCase().replace(/ё/g, 'е'); }
+  num(n) { return String(Math.round(n * 100) / 100).replace('.', ','); }
+  fmt(q, u) {
+    if (q == null) return '';
+    if (u === 'г' && q >= 1000) return this.num(q / 1000) + ' кг';
+    if (u === 'мл' && q >= 1000) return this.num(q / 1000) + ' л';
+    return this.num(q) + (u ? ' ' + u : '');
+  }
+  parse(s) {
+    var units = { 'г': ['г', 1], 'гр': ['г', 1], 'кг': ['г', 1000], 'мл': ['мл', 1], 'л': ['мл', 1000], 'шт': ['шт', 1], 'штук': ['шт', 1], 'штуки': ['шт', 1], 'уп': ['уп', 1], 'упаковка': ['уп', 1], 'пачка': ['уп', 1] };
+    var m = s.trim().match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*([^\d\s]+)?$/);
+    if (!m) return { name: s.trim(), qty: null, unit: null };
+    var q = parseFloat(m[2].replace(',', '.'));
+    var u = m[3] ? this.norm(m[3]).replace(/\.$/, '') : null;
+    if (u && units[u]) { q = q * units[u][1]; u = units[u][0]; }
+    return { name: m[1].trim(), qty: q, unit: u };
+  }
+  flash(ids) {
+    this.later(2600, () => this.setState((s) => ({ items: s.items.map((it) => ids.indexOf(it.id) >= 0 ? Object.assign({}, it, { fresh: false }) : it) })));
+  }
+  toast(title, body) {
+    this.setState({ toastTitle: title, toastBody: body });
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => this.setState({ toastTitle: '' }), 4200);
+  }
+  assistantAdds() {
+    var add = [
+      { name: 'Свёкла', qty: 3, unit: 'шт', tags: ['Овощи и фрукты', 'Для борща'], src: 'Claude' },
+      { name: 'Капуста белокочанная', qty: 1, unit: 'шт', tags: ['Овощи и фрукты', 'Для борща'], src: 'Claude' },
+      { name: 'Говядина на кости', qty: 800, unit: 'г', tags: ['Мясо', 'Для борща'], src: 'Claude' }
+    ].map((it) => Object.assign({ id: this.nextId++, fresh: true }, it));
+    this.setState((s) => ({ items: add.concat(s.items) }));
+    this.flash(add.map((a) => a.id));
+    this.toast('Claude добавил 3 позиции', 'свёкла, капуста белокочанная, говядина на кости');
+  }
+  toggle(id) {
+    this.setState((s) => ({ items: s.items.map((it) => it.id === id ? Object.assign({}, it, { bought: !it.bought, fresh: false }) : it) }));
+  }
+  toggleTag(t) {
+    this.setState((s) => ({ selected: s.selected.indexOf(t) >= 0 ? s.selected.filter((x) => x !== t) : s.selected.concat([t]) }));
+  }
+  add(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    var text = this.state.draft.trim();
+    if (!text) return;
+    var p = this.parse(text);
+    var key = this.norm(p.name);
+    var hit = this.state.items.find((it) => !it.bought && this.norm(it.name) === key && (it.unit || null) === (p.unit || null));
+    if (hit) {
+      var q = hit.qty == null ? p.qty : (p.qty == null ? hit.qty : hit.qty + p.qty);
+      this.setState((s) => ({ draft: '', items: s.items.map((it) => it.id === hit.id ? Object.assign({}, it, { qty: q, fresh: true }) : it) }));
+      this.flash([hit.id]);
+      this.toast('Объединено: ' + hit.name, q == null ? 'количество не указано' : 'теперь ' + this.fmt(q, hit.unit));
+    } else {
+      var item = { id: this.nextId++, name: p.name.charAt(0).toUpperCase() + p.name.slice(1), qty: p.qty, unit: p.unit, tags: this.state.selected.slice(), fresh: true };
+      this.setState((s) => ({ draft: '', items: [item].concat(s.items) }));
+      this.flash([item.id]);
+    }
+  }
+  renderVals() {
+    var s = this.state;
+    var dark = this.props.dark ?? false;
+    var view = s.view || (this.props.view ?? 'list');
+    var sel = s.selected;
+    var tags = [];
+    s.items.forEach((it) => it.tags.forEach((t) => { if (tags.indexOf(t) < 0) tags.push(t); }));
+    var open = s.items.filter((it) => !it.bought);
+    var match = (it) => !sel.length || it.tags.some((t) => sel.indexOf(t) >= 0);
+    var toBuy = open.filter(match);
+    var bought = s.items.filter((it) => it.bought && match(it));
+    var row = (it, skip) => {
+      var chips = it.tags.filter((t) => t !== skip).map((t) => ({ name: t }));
+      return Object.assign({}, it, {
+        qtyText: this.fmt(it.qty, it.unit),
+        chips: chips,
+        isAi: !!it.src,
+        srcLabel: it.src ? 'добавил ' + it.src : '',
+        hasNote: !!it.note,
+        hasMeta: !!(it.src || chips.length || it.note),
+        rowBg: it.fresh ? 'var(--fresh)' : 'transparent',
+        anim: it.fresh ? 'glIn .45s ease-out' : 'none',
+        toggle: () => this.toggle(it.id)
+      });
+    };
+    var groupTags = sel.length ? tags.filter((t) => sel.indexOf(t) >= 0) : tags;
+    var groups = groupTags.map((t) => {
+      var its = toBuy.filter((it) => it.tags.indexOf(t) >= 0).map((it) => row(it, t));
+      return { name: t, count: its.length, items: its };
+    }).filter((g) => g.items.length);
+    var untagged = sel.length ? [] : toBuy.filter((it) => !it.tags.length).map((it) => row(it));
+    if (untagged.length) groups.push({ name: 'Без тега', count: untagged.length, items: untagged });
+    var yellow = (this.props.navbar ?? 'white') === 'yellow';
+    var chip = (name, count, on, pick) => ({ name: name, count: count, on: on, pick: pick,
+      bg: on ? (yellow ? '#1C1C1E' : 'var(--accent-fill)') : 'var(--surface)',
+      fg: on ? (yellow ? '#FFFFFF' : 'var(--on-accent)') : 'var(--ink)',
+      border: on ? (yellow ? '#1C1C1E' : 'var(--accent-fill)') : (yellow ? 'transparent' : 'var(--line)') });
+    var chips = [chip('Все', open.length, !sel.length, () => this.setState({ selected: [] }))].concat(
+      tags.map((t) => chip(t, open.filter((it) => it.tags.indexOf(t) >= 0).length, sel.indexOf(t) >= 0, () => this.toggleTag(t)))
+    );
+    var seg = (on) => ({ bg: on ? 'var(--surface)' : 'transparent', fg: on ? 'var(--ink)' : 'var(--ink-2)', shadow: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
+    return {
+      theme: dark ? 'gl-dark' : 'gl-light',
+      navBg: yellow ? 'var(--accent-fill)' : 'var(--bg)',
+      navTitle: yellow ? 'var(--on-accent)' : 'var(--ink)',
+      navFg: yellow ? 'var(--on-accent)' : 'var(--accent)',
+      navSub: yellow ? 'var(--on-accent)' : 'var(--ink-2)',
+      segTrack: yellow ? 'rgba(0,0,0,.1)' : 'var(--surface-2)',
+      summary: toBuy.length + ' к покупке · ' + bought.length + ' куплено',
+      chips: chips,
+      isList: view === 'list',
+      isTags: view === 'tags',
+      segList: seg(view === 'list'),
+      segTags: seg(view === 'tags'),
+      showList: () => this.setState({ view: 'list' }),
+      showTags: () => this.setState({ view: 'tags' }),
+      items: toBuy.map((it) => row(it)),
+      groups: groups,
+      allDone: toBuy.length === 0,
+      hasBought: bought.length > 0,
+      boughtCount: bought.length,
+      bought: bought.map((it) => row(it)),
+      boughtOpen: s.boughtOpen,
+      chevron: s.boughtOpen ? 'rotate(180deg)' : 'none',
+      toggleBought: () => this.setState({ boughtOpen: !s.boughtOpen }),
+      clearBought: () => this.setState((st) => ({ items: st.items.filter((it) => !it.bought) })),
+      draft: s.draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      onAdd: (e) => this.add(e),
+      hasToast: !!s.toastTitle,
+      toastTitle: s.toastTitle,
+      toastBody: s.toastBody
+    };
+  }
+}
+</script>
+</body>
+</html>

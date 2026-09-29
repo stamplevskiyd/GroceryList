@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Пустой список</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&family=Onest:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+.gl-light{--bg:#FFFFFF;--surface:#FFFFFF;--surface-2:#F2F2F4;--ink:#1C1C1E;--ink-2:#5B5B60;--ink-3:#6E6E73;--line:#E5E5EA;--accent:#9C6500;--accent-fill:#FFCC00;--accent-soft:#FFF6D1;--on-accent:#1C1C1E;--ai:#5856D6;--ai-soft:#EEEEFB;--danger:#C4291C;--danger-soft:#FDE7E5;--on-danger:#FFFFFF;--fresh:#FFF0A8;--scrim:rgba(0,0,0,.35);--shadow:0 1px 2px rgba(0,0,0,.05),0 10px 30px rgba(0,0,0,.12)}
+.gl-dark{--bg:#000000;--surface:#1C1C1E;--surface-2:#2C2C2E;--ink:#F2F2F7;--ink-2:#AEAEB2;--ink-3:#98989D;--line:#38383A;--accent:#FFD60A;--accent-fill:#FFD60A;--accent-soft:#332B00;--on-accent:#1C1C1E;--ai:#A5A4FF;--ai-soft:#25244A;--danger:#FF6961;--danger-soft:#3A1A18;--on-danger:#1C1C1E;--fresh:#3D3510;--scrim:rgba(0,0,0,.6);--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.5)}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+input::placeholder,textarea::placeholder{color:var(--ink-3)}
+</style>
+</helmet>
+<div class="{{theme}}" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); color: var(--ink); font-family: Onest, system-ui, sans-serif">
+
+<header style="display: flex; flex-direction: column; gap: 12px; padding: 52px 16px 14px; border-bottom: 1px solid var(--line)">
+<div style="display: flex; align-items: center; gap: 2px">
+<h1 style="flex-grow: 1; margin: 0; font-family: Literata, Georgia, serif; font-size: 32px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.1">Покупки</h1>
+<a href="Tags.dc.html" aria-label="Теги" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 22px; color: var(--accent)">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"></path><circle cx="7.5" cy="7.5" r="1.4"></circle></svg>
+</a>
+<a href="Settings.dc.html" aria-label="Настройки" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 22px; color: var(--accent)">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>
+</a>
+</div>
+<span style="font-size: 14px; color: var(--ink-2)">Пока ничего не нужно</span>
+</header>
+
+<main style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 24px 28px 40px; text-align: center">
+<svg width="104" height="104" viewBox="0 0 104 104" fill="none" stroke="var(--ink-3)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M24 38h56l-5 50a4 4 0 0 1-4 3.6H33a4 4 0 0 1-4-3.6z"></path>
+<path d="M38 38V30a14 14 0 0 1 28 0v8"></path>
+<path d="M44 60h16M44 70h10"></path>
+<path d="M78 14l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="var(--ai)" stroke="none"></path>
+</svg>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0; font-family: Literata, Georgia, serif; font-size: 26px; font-weight: 600">Список пуст</h2>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: var(--ink-2)">Расскажите ассистенту, что собираетесь готовить, — он сам добавит недостающее.</p>
+</div>
+<div style="align-self: stretch; display: flex; gap: 10px; padding: 14px 16px; border-radius: 16px; background: var(--ai-soft); color: var(--ink); text-align: left">
+<span style="flex-shrink: 0; width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: var(--ai); color: #FFFFFF"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"></path></svg></span>
+<span style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 12px; font-weight: 600; color: var(--ai)">Попросите Claude</span>
+<span style="font-size: 16px; line-height: 1.45">«Хочу приготовить карбонару на четверых — добавь в список, чего не хватает»</span>
+</span>
+</div>
+<a href="Settings.dc.html" style="height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 12px; font-size: 15px; font-weight: 500; text-decoration: none">Как подключить ассистента
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+</main>
+
+<form style="flex-shrink: 0; display: flex; gap: 8px; padding: 10px 12px 30px; background: var(--surface); border-top: 1px solid var(--line)">
+<label style="flex-grow: 1; min-width: 0; height: 50px; display: flex; align-items: center; padding: 0 16px; border-radius: 14px; background: var(--surface-2)">
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Новая позиция</span>
+<input placeholder="…или добавьте сами: хлеб 1 шт" autocomplete="off" style="flex-grow: 1; min-width: 0; border: 0; outline: none; background: transparent; font-family: inherit; font-size: 16px; color: var(--ink)">
+</label>
+<button type="button" aria-label="Добавить" style="flex-shrink: 0; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 14px; background: var(--accent-fill); color: var(--on-accent)">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+</button>
+</form>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: (this.props.dark ?? false) ? 'gl-dark' : 'gl-light' };
+  }
+}
+</script>
+</body>
+</html>

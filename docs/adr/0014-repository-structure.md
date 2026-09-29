@@ -20,7 +20,8 @@ GroceryList/
 ├── backend/                 Python-проект (uv), ниже
 ├── frontend/                React + Vite + vite-plugin-pwa, ниже
 ├── docs/                    superpowers/specs, design, adr
-├── scripts/                 fmt, lint, typecheck, test, api, check (ADR-0007); pg_backup.sh
+├── .github/workflows/       ci.yml, images.yml, deploy.yml (ADR-0015)
+├── scripts/                 fmt, lint, typecheck, test, api, check (ADR-0007); deploy.sh, pg_backup.sh
 ├── docker-compose.yml       caddy, backend, postgres (postgres:18-alpine), backup
 ├── Caddyfile                статика PWA + прокси /api, /mcp, /oauth, /.well-known → backend
 ├── backend.Dockerfile       образ backend (uv, только API/MCP/OAuth)

@@ -217,6 +217,7 @@ REST и MCP — две «двери» к одной логике: поведен
 из неё генерируется TypeScript-клиент.
 
 - `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/me`
+- `GET /api/health` — публичный: `{status, version}`, проверка БД (деплой и healthcheck, ADR-0015)
 - `GET /api/items?include_bought=` — позиции (весь список; фильтр по тегам — на клиенте, §5.7)
 - `POST /api/items` — пакетное добавление структурированных позиций (то же правило merge)
 - `POST /api/items/quick-add` — `{text, tags}`: разбор строки на сервере + добавление (§5.6)
@@ -351,6 +352,9 @@ Mobile-first (iPhone), светлая и тёмная темы; на дескт�
   и Caddyfile. Caddy раздаёт статику и проксирует `/api`, `/mcp`, `/oauth`, `/.well-known`
   на `backend`.
 - Миграции Alembic (с `downgrade`) применяются при старте `backend`; образ Postgres — `postgres:18-alpine`.
+- **CI/CD** (ADR-0015): GitHub Actions — проверки на каждый push, образы на Docker Hub
+  (`grocerylist-backend`, `grocerylist-caddy`) для `main` и тегов, деплой на VPS кнопкой или
+  по тегу `v*` с бэкапом перед миграциями и проверкой `/api/health`. VPS ничего не собирает.
 - **Адрес** задаётся конфигом (`APP_PUBLIC_URL`, домен в `Caddyfile`):
   - разработка — `localhost`;
   - старт продакшена — технический адрес хостинга `s157254.love-is.nexus`
@@ -388,4 +392,3 @@ Mobile-first (iPhone), светлая и тёмная темы; на дескт�
 
 - Совместимость Cloudflare-прокси хостинга с SSE, MCP и OAuth-редиректами — проверяется на первом
   деплое.
-- CI/CD (GitHub Actions → деплой на VPS) или ручной деплой.

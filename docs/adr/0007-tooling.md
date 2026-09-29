@@ -22,6 +22,8 @@
   аннотации уже требует mypy strict.
 - **mypy** — `strict = true`, плагин `pydantic.mypy` (ADR-0002).
 - **import-linter** — слои и границы модулей (ADR-0001, ADR-0005, ADR-0008).
+- **shellcheck** — проверка `scripts/*.sh`; ставится как Python-пакет `shellcheck-py` в группу `dev`,
+  без системной установки.
 - **pytest** + `pytest-asyncio` (`asyncio_mode = "auto"`,
   `asyncio_default_fixture_loop_scope = "session"` — движок БД и контейнер живут в одном цикле
   событий с тестами), `testcontainers[postgres]`, `httpx`, `pytest-cov` (отчёт без порога).
@@ -31,7 +33,7 @@
 ```
 scripts/
   fmt.sh         ruff format + ruff check --fix
-  lint.sh        ruff format --check + ruff check + lint-imports
+  lint.sh        ruff format --check + ruff check + lint-imports + shellcheck scripts/*.sh
   typecheck.sh   mypy
   test.sh        pytest (аргументы пробрасываются: scripts/test.sh -k merge)
   api.sh         экспорт OpenAPI + генерация TS-типов (ADR-0009)
@@ -43,7 +45,7 @@ scripts/
 - **Makefile** — тонкая обёртка для удобства: `make fmt`, `make lint`, `make check`, … — каждая
   цель вызывает одноимённый скрипт, своей логики нет.
 - **CI** вызывает те же скрипты (`scripts/check.sh`), а не дублирует команды в YAML.
-  Устройство CI/CD — отдельный ADR (открытый вопрос спец. §13).
+  Устройство CI/CD — ADR-0015.
 - Фронтенд добавит свои шаги (`tsc --noEmit`, ESLint, Prettier) в `lint.sh` / `typecheck.sh`
   при создании `frontend/`.
 

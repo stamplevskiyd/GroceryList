@@ -1,0 +1,24 @@
+# Локальная разработка: пока только Postgres. Сервисы caddy, backend и backup
+# добавляются в плане деплоя (ADR-0015).
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-grocery}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-grocery}
+      POSTGRES_DB: ${POSTGRES_DB:-grocery}
+    ports:
+      # Только localhost: наружу Postgres не публикуется (спец. §9). Порт на машине
+      # разработчика меняется через POSTGRES_PORT, если 5432 занят.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # Postgres 18 хранит данные в подкаталоге версии внутри /var/lib/postgresql.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-grocery}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:

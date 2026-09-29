@@ -65,14 +65,14 @@ backend/
 │   ├── services/            ── бизнес-логика ──                               ADR-0008
 │   │   ├── shopping_list_service/   функции сервиса, merge_item, проверка доступа
 │   │   ├── tags.py          переименование / объединение, массовые действия
-│   │   ├── events.py        record_event, SSE-хаб, on_commit-публикация
+│   │   ├── events.py        record_event, SSE-хаб, публикация после коммита
 │   │   ├── push/            worker, sender (pywebpush), тексты уведомлений
 │   │   └── auth/            context (get_current_user), passwords, sessions, pats,
 │   │                        rate_limit, oauth/ (authorize, tokens, clients, cimd)
 │   ├── db/                  ── данные ──
 │   │   ├── base.py          Base, naming_convention, миксины id / created_at  ADR-0013
 │   │   ├── types.py         PydanticJSON, str_enum()
-│   │   ├── session.py       unit_of_work, get_current_session, on_commit      ADR-0004
+│   │   ├── session.py       unit_of_work, get_current_session               ADR-0004
 │   │   ├── models/          user, shopping_list, item, tag, event, push, auth
 │   │   └── repositories/    base.py + по репозиторию на агрегат               ADR-0005
 │   ├── schemas/             ── Pydantic ── items, tags, events, source, errors, auth, common

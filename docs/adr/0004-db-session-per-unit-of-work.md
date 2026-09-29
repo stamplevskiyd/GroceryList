@@ -27,7 +27,6 @@
 
 ```python
 _session: ContextVar[AsyncSession | None] = ContextVar("db_session", default=None)
-_after_commit: ContextVar[list[Callable[[], Awaitable[None]]] | None] = ...
 
 @asynccontextmanager
 async def unit_of_work() -> AsyncIterator[AsyncSession]:
@@ -35,22 +34,17 @@ async def unit_of_work() -> AsyncIterator[AsyncSession]:
     if _session.get() is not None:
         raise RuntimeError("unit_of_work уже открыт в этом контексте")
     async with session_factory() as session:
-        s_token, h_token = _session.set(session), _after_commit.set([])
+        token = _session.set(session)
         try:
             yield session
             await session.commit()
-            hooks = _after_commit.get() or []
         except BaseException:
             await session.rollback()
             raise
         finally:
-            _session.reset(s_token)
-            _after_commit.reset(h_token)
-    for hook in hooks:                      # после коммита, вне транзакции
-        await hook()
+            _session.reset(token)
 
 def get_current_session() -> AsyncSession: ...  # RuntimeError, если unit_of_work не открыт
-def on_commit(hook: Callable[[], Awaitable[None]]) -> None: ...
 ```
 
 - **REST**: dependency `db_unit_of_work` = `async with unit_of_work(): yield`, подключается к
@@ -61,8 +55,10 @@ def on_commit(hook: Callable[[], Awaitable[None]]) -> None: ...
 - **Push-воркер**: `unit_of_work()` на каждую пачку строк outbox.
 - **SSE**: эндпоинт открывает `unit_of_work()` только на время проверки аутентификации,
   сам поток идёт без сессии.
-- `on_commit` — механизм «после коммита»: модуль `events` регистрирует через него публикацию
-  события в SSE-хаб и сигнал push-воркеру (спец. §7, п. 2). При откате хуки не вызываются.
+- Своего механизма «после коммита» в `unit_of_work` нет. Если действие должно выполняться только
+  после успешного коммита (публикация события в SSE-хаб и сигнал push-воркеру, спец. §7, п. 2),
+  оно делается через event listeners SQLAlchemy (`after_commit` сессии) — решается в плане,
+  где появляется.
 - Коммит делает **только** `unit_of_work`. Репозитории и сервисы могут вызывать `flush()`,
   но не `commit()` / `rollback()` (ADR-0005).
 - Вложенный `unit_of_work` — ошибка. Если понадобится независимая транзакция внутри
@@ -80,7 +76,7 @@ def on_commit(hook: Callable[[], Awaitable[None]]) -> None: ...
 - `fastapi-sqla` — сессия в `request.state` и передаётся аргументами, не `ContextVar`;
   жёсткие верхние границы версий Python и FastAPI.
 - `fastapi-async-sqlalchemy` — ближе всего, но коммитит в middleware, отсюда большой объём
-  обработки краевых случаев (стриминг, фоновые задачи); нет хуков после коммита; MCP и воркер
+  обработки краевых случаев (стриминг, фоновые задачи); MCP и воркер
   всё равно требуют явного контекста.
 - `context-async-sqlalchemy` — разрешает коммит из обработчика, небольшое сообщество.
 
@@ -97,7 +93,7 @@ middleware, а явный `unit_of_work()` одинаково работает �
 
 ## Как проверяется
 
-- Тесты `db/session.py`: коммит при успехе, откат при исключении, хуки только после коммита,
-  ошибка при вложенности, сброс контекста после выхода.
+- Тесты `db/session.py`: коммит при успехе, откат при исключении, ошибка при вложенности,
+  сброс контекста после выхода.
 - Тест REST: ответ отправляется после коммита (ошибка коммита → 500, а не 200).
 - Ruff-правило / grep в команде проверки: `.commit(` вне `db/session.py` запрещён.

@@ -4,8 +4,7 @@
 dependency REST, middleware MCP, push-воркер.
 """
 
-import logging
-from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
+from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from contextvars import ContextVar
 
@@ -16,14 +15,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-logger = logging.getLogger(__name__)
-
-type AfterCommitHook = Callable[[], Awaitable[None]]
-
 _session: ContextVar[AsyncSession | None] = ContextVar("db_session", default=None)
-_after_commit: ContextVar[list[AfterCommitHook] | None] = ContextVar(
-    "db_after_commit", default=None
-)
 
 
 class _Database:
@@ -68,17 +60,11 @@ def _session_factory() -> async_sessionmaker[AsyncSession]:
 
 @asynccontextmanager
 async def unit_of_work() -> AsyncIterator[AsyncSession]:
-    """Открыть сессию в контексте; закоммитить при успехе, откатить при исключении.
-
-    Хуки on_commit выполняются после коммита, вне транзакции. Упавший хук логируется и не
-    превращает уже сохранённое изменение в ошибку.
-    """
+    """Открыть сессию в контексте; закоммитить при успехе, откатить при исключении."""
     if _session.get() is not None:
         raise RuntimeError("unit_of_work уже открыт в этом контексте")
-    hooks: list[AfterCommitHook] = []
     async with _session_factory()() as session:
-        session_token = _session.set(session)
-        hooks_token = _after_commit.set(hooks)
+        token = _session.set(session)
         try:
             yield session
             await session.commit()
@@ -86,13 +72,7 @@ async def unit_of_work() -> AsyncIterator[AsyncSession]:
             await session.rollback()
             raise
         finally:
-            _session.reset(session_token)
-            _after_commit.reset(hooks_token)
-    for hook in hooks:
-        try:
-            await hook()
-        except Exception:
-            logger.exception("Хук после коммита завершился ошибкой; данные уже сохранены")
+            _session.reset(token)
 
 
 def get_current_session() -> AsyncSession:
@@ -100,11 +80,3 @@ def get_current_session() -> AsyncSession:
     if session is None:
         raise RuntimeError("Сессия БД не открыта: вызов вне unit_of_work")
     return session
-
-
-def on_commit(hook: AfterCommitHook) -> None:
-    """Выполнить hook после успешного коммита текущей единицы работы."""
-    hooks = _after_commit.get()
-    if hooks is None:
-        raise RuntimeError("on_commit вызван вне unit_of_work")
-    hooks.append(hook)

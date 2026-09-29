@@ -58,7 +58,7 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 strict = true
 python_version = "3.14"
 plugins = ["pydantic.mypy"]
-files = ["src", "tests"]
+files = ["src", "tests", "migrations"]
 # tests/ и migrations/ — не пакеты: имена модулей считаются от src/ и backend/,
 # иначе несколько conftest.py конфликтуют.
 explicit_package_bases = true

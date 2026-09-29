@@ -1,0 +1,32 @@
+# Быстрые проверки на каждый коммит (ADR-0007). mypy и тесты — в scripts/check.sh.
+# Макеты Claude Design — снимок редактора, их не трогаем.
+exclude: ^docs/design/screens/
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.9
+    hooks:
+      # Только код бэкенда: фрагменты в docs/*.md намеренно неполные.
+      - id: ruff-check
+        args: [--fix]
+        files: ^backend/
+      - id: ruff-format
+        files: ^backend/
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.12.20
+    hooks:
+      - id: uv-lock
+        files: ^backend/(pyproject\.toml|uv\.lock)$
+        args: [--project, backend]
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks

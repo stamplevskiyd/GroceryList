@@ -24,6 +24,11 @@ async def _get_dummy_hash() -> str:
         return _dummy_hash
 
 
+async def initialize_passwords() -> None:
+    """Подготовить dummy hash при запуске приложения до приёма попыток входа."""
+    await _get_dummy_hash()
+
+
 async def verify_password(password: str, password_hash: str | None) -> bool:
     candidate_hash = password_hash if password_hash is not None else await _get_dummy_hash()
     try:

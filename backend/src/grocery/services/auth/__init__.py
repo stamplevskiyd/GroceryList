@@ -9,7 +9,7 @@ from grocery.schemas.shopping_lists import MemberCreate, ShoppingListCreate
 from grocery.schemas.users import UserCreate
 from grocery.services.auth.context import acting_as, get_current_user
 from grocery.services.auth.errors import AuthError
-from grocery.services.auth.passwords import hash_password, verify_password
+from grocery.services.auth.passwords import hash_password, initialize_passwords, verify_password
 from grocery.services.auth.sessions import get_me, issue_session, logout, resolve_session
 
 __all__ = [
@@ -18,6 +18,7 @@ __all__ = [
     "create_user",
     "get_current_user",
     "get_me",
+    "initialize_passwords",
     "issue_session",
     "logout",
     "resolve_session",

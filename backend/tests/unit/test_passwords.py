@@ -5,7 +5,7 @@ import pytest
 from argon2 import PasswordHasher, extract_parameters
 from argon2.exceptions import InvalidHashError, VerifyMismatchError
 
-from grocery.services.auth.passwords import hash_password, verify_password
+from grocery.services.auth.passwords import hash_password, initialize_passwords, verify_password
 
 
 async def test_correct_and_incorrect_passwords() -> None:
@@ -13,6 +13,24 @@ async def test_correct_and_incorrect_passwords() -> None:
     assert password_hash != "correct-password"
     assert await verify_password("correct-password", password_hash) is True
     assert await verify_password("wrong-password", password_hash) is False
+
+
+async def test_initialization_prewarms_dummy_hash_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    from grocery.services.auth import passwords
+
+    monkeypatch.setattr(passwords, "_dummy_hash", None)
+    seen: list[str] = []
+    original_hash = PasswordHasher.hash
+
+    def hash_password(self: PasswordHasher, password: str) -> str:
+        seen.append(password)
+        return original_hash(self, password)
+
+    monkeypatch.setattr(PasswordHasher, "hash", hash_password)
+    await initialize_passwords()
+    await initialize_passwords()
+    assert await verify_password("unknown-password", None) is False
+    assert len(seen) == 1
 
 
 async def test_unknown_user_verifies_dummy_hash_with_same_parameters(

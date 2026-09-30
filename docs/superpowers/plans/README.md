@@ -11,7 +11,7 @@
 |---|---|---|---|
 | 1 | [Фундамент бэкенда](2026-09-29-01-backend-foundation.md) | Проект, инструменты и проверки, настройки, `unit_of_work`, базовый репозиторий, миграции, тестовая инфраструктура, `/api/health`, CI | выполнен |
 | 2 | [Домен списка покупок](2026-09-30-02-shopping-domain.md) | Модели списков, позиций, тегов, событий; нормализация, разбор строки, объединение; `shopping_list_service`, теги, запись событий и SSE-хаб; `create-user` | выполнен |
-| 3 | [REST API и вход в PWA](2026-09-30-03-rest-api-and-sessions.md) | Cookie-сессии, логин с ограничением попыток, эндпоинты позиций и тегов, SSE, ошибки, экспорт OpenAPI | план готов |
+| 3 | [REST API и вход в PWA](2026-09-30-03-rest-api-and-sessions.md) | Cookie-сессии, логин с ограничением попыток, эндпоинты позиций и тегов, SSE, ошибки, экспорт OpenAPI | выполнен |
 | 4 | MCP-сервер и PAT | `MCPServer` как resource server, верификатор PAT, middleware, инструменты, инструкции | — |
 | 5 | Деплой и CD | Dockerfile'ы, полный `docker-compose.yml`, Caddy, `images.yml`, `deploy.yml`, первый деплой: проверка Cloudflare, подключение Claude Code по PAT | — |
 | 6 | OAuth Authorization Server | Метаданные, CIMD и DCR, authorize и API согласия, token с ротацией, revoke, подключённые приложения | — |

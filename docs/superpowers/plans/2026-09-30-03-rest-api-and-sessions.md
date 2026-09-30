@@ -1,6 +1,6 @@
 # REST API и вход в PWA — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Пользователь запросил только план; выполнение начинается отдельным запросом.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Выполнение завершено 2026-09-30; результаты и принятые уточнения записаны ниже.
 
 **Goal:** Предоставить проверенный HTTP-контракт для PWA: вход/выход, текущий пользователь, позиции, теги, живые обновления и генерируемые TypeScript-типы.
 
@@ -68,9 +68,9 @@
 | POST /api/tags/{id}/bulk | TagBulk | 200 CountRead | bulk_tag |
 | GET /api/events | shopping_list_id + cookie | 200 text/event-stream | authorize_events + event_hub |
 
-Все мутации требуют X-Device-Id. Missing/empty/too-long header — 422 ErrorResponse. Protected route без действующей cookie — 401 (даже если X-Device-Id отсутствует); login — публичный, но заголовок проверяется.
+Все мутации требуют X-Device-Id. Missing/empty/too-long header — 422 ErrorResponse. На protected route аутентификация выполняется до проверки заголовка и схемы синтаксически корректного JSON: без действующей cookie — 401, даже если X-Device-Id отсутствует. Синтаксически некорректный JSON транспортный парсер FastAPI отклоняет раньше аутентификации с 422 `invalid_request`. Login — публичный, но заголовок проверяется.
 
-PROTECTED_RESPONSES после Task 4 включает 401/404/409/422/500; PUBLIC_RESPONSES для login — 401/422/429/500. Обе карты используют `{"model": ErrorResponse}` и соответствующие описания; это единственное место объявления схем ошибок для роутеров.
+PROTECTED_RESPONSES после Task 4 включает 401/404/409/422/500; PUBLIC_RESPONSES для login — 401/422/429/500. Обе карты используют `{"model": ErrorResponse}` и соответствующие описания; это центральное место объявления схем ошибок для роутеров. Для SSE производная карта `SSE_PROTECTED_RESPONSES` сохраняет статусы/описания и явно задаёт `application/json` со ссылкой на общий ErrorResponse, чтобы response class не описывал ошибки как поток.
 
 Общие ошибки: 401 `not_authenticated` либо `invalid_credentials`; 404 — code из DomainError; 409 `conflict`; 422 `invalid_request` (валидация HTTP) либо `invalid_input` (сервис); 429 `too_many_attempts` + целый Retry-After ≥ 1; 500 `internal_error`. Форма `{code, message, details?}`, details — только `{loc: list[str | int], message: str}`. Не возвращать `hint`, пароль, входное значение, SQL или traceback.
 
@@ -96,7 +96,7 @@ PROTECTED_RESPONSES после Task 4 включает 401/404/409/422/500; PUBL
 **Consumes:** DomainError/NotFoundError/InvalidInputError/ConflictError, ErrorDetail, ItemRead, ParsedItem; create_app().
 **Produces:** Quantity с Decimal внутри и number в JSON; ErrorResponse; `register_error_handlers(app: FastAPI) -> None`; полные 422/500 ответы и reusable responses mapping.
 
-- [ ] **1. Написать тесты контракта:** Decimal остаётся точным до сериализации; ItemRead/ParsedItem.quantity, AddItemResult.item.quantity и EventPayload.items.quantity в JSON — число или null. На тестовых probe routes проверить DomainError statuses, отсутствие hint/input/password и форму RequestValidationError. Ошибку коммита existing probe route проверить как 500 в той же схеме; для неожиданных исключений HTTP-клиент использует ASGITransport(raise_app_exceptions=False), потому что Starlette после отправки error response может повторно поднять исключение.
+- [x] **1. Написать тесты контракта:** Decimal остаётся точным до сериализации; ItemRead/ParsedItem.quantity, AddItemResult.item.quantity и EventPayload.items.quantity в JSON — число или null. На тестовых probe routes проверить DomainError statuses, отсутствие hint/input/password и форму RequestValidationError. Ошибку коммита existing probe route проверить как 500 в той же схеме; для неожиданных исключений HTTP-клиент использует ASGITransport(raise_app_exceptions=False), потому что Starlette после отправки error response может повторно поднять исключение.
 
   ```python
   from decimal import Decimal
@@ -118,8 +118,8 @@ PROTECTED_RESPONSES после Task 4 включает 401/404/409/422/500; PUBL
 
   Probe `/probe/validate` определить в тесте с обязательным дополнительным полем; не добавлять probe endpoints в приложение.
 
-- [ ] **2. Убедиться в RED:** `scripts/test.sh tests/unit/test_api_schemas.py tests/api/test_errors.py`. Причина — текущий Decimal сериализуется строкой, обработчиков нет.
-- [ ] **3. Реализовать тип и обработчики:**
+- [x] **2. Убедиться в RED:** `scripts/test.sh tests/unit/test_api_schemas.py tests/api/test_errors.py`. Причина — текущий Decimal сериализуется строкой, обработчиков нет.
+- [x] **3. Реализовать тип и обработчики:**
 
   ```python
   Quantity = Annotated[
@@ -138,8 +138,8 @@ PROTECTED_RESPONSES после Task 4 включает 401/404/409/422/500; PUBL
   ```
 
   Create/Update используют PositiveQuantity, Read/ParsedItem — Quantity. Field constraints исходного входа сохранить. Установка serializer не меняет Numeric или арифметику. Error handler DomainError использует `str(exc)` (учитывает уточнённое сообщение), `exc.code`, `exc.details`; маппинг по базовому классу, info log только code. Handler RequestValidationError переносит `loc` и `msg`, исключает `input/ctx`. Handler Exception логирует traceback на error, клиенту фиксированное сообщение. Ответ через JSONResponse, `exclude_none=True`; status mappings 404/422/409. Auth handlers добавить в Task 4 после определения исключений.
-- [ ] **4. Проверить GREEN:** targeted tests + `scripts/typecheck.sh`; существующие domain/merge tests остаются зелёными.
-- [ ] **5. Commit:** `git add backend/src/grocery/schemas backend/src/grocery/api/errors.py backend/src/grocery/main.py backend/tests/unit/test_api_schemas.py backend/tests/api/test_errors.py && git commit -m 'feat: define REST error and quantity contract'`.
+- [x] **4. Проверить GREEN:** targeted tests + `scripts/typecheck.sh`; существующие domain/merge tests остаются зелёными.
+- [x] **5. Commit:** `git add backend/src/grocery/schemas backend/src/grocery/api/errors.py backend/src/grocery/main.py backend/tests/unit/test_api_schemas.py backend/tests/api/test_errors.py && git commit -m 'feat: define REST error and quantity contract'`.
 
 ## Task 2. Cookie-сессии и сервис входа
 
@@ -158,7 +158,7 @@ async def verify_password(password: str, password_hash: str | None) -> bool: ...
 
 `SessionIssued` содержит token/UTC expires_at; сервисы наружу возвращают схемы, исключение `resolve_session` намеренно возвращает User для аутентификации (ADR-0003).
 
-- [ ] **1. Написать тесты сохранения и expiry:** выданный token не равен token_hash, token_hash равен SHA-256; resolve загружает правильного пользователя; неизвестный/пустой/просроченный token — AuthError; logout удаляет строку и делает token непригодным; get_me содержит только id/username/shopping_lists. Два устройства получают разные сессии, logout первой не удаляет вторую. Исключение UoW после issue_session откатывает session.
+- [x] **1. Написать тесты сохранения и expiry:** выданный token не равен token_hash, token_hash равен SHA-256; resolve загружает правильного пользователя; неизвестный/пустой/просроченный token — AuthError; logout удаляет строку и делает token непригодным; get_me содержит только id/username/shopping_lists. Два устройства получают разные сессии, logout первой не удаляет вторую. Исключение UoW после issue_session откатывает session.
 
   ```python
   async def test_session_stores_only_hash(owner: User) -> None:
@@ -175,8 +175,8 @@ async def verify_password(password: str, password_hash: str | None) -> bool: ...
 
   Для expiry присвоить expires_at прошлом в отдельном UoW и затем resolve в новом UoW. Для паролей: правильный/неправильный пароль; неизвестный пользователь выполняет Argon2 verify dummy hash той же сложности, не short-circuit. Повреждённый сохранённый hash — внутренний сбой, не «успешный вход».
 
-- [ ] **2. RED:** `scripts/test.sh tests/integration/test_auth_sessions.py tests/unit/test_passwords.py`.
-- [ ] **3. Реализовать schemas/model/repo:**
+- [x] **2. RED:** `scripts/test.sh tests/integration/test_auth_sessions.py tests/unit/test_passwords.py`.
+- [x] **3. Реализовать schemas/model/repo:**
 
   ```python
   class SessionCreate(BaseModel):
@@ -205,8 +205,8 @@ async def verify_password(password: str, password_hash: str | None) -> bool: ...
   Перенести текущий AuthError и ContextVar в context/errors, переэкспортировать старые имена из auth/__init__.py: тесты домена не менять. PasswordHasher hash/verify выполнить через `asyncio.to_thread`, dummy hash создать один раз при инициализации passwords helper. get_me строит ShoppingListRead из доступных membership-списков, не импортирует shopping_list_service.
 
   AuthSettings: session_ttl_seconds и параметры лимитера из раздела решений, positive Field; `Settings.auth` имеет default_factory, поэтому старые конфигурации работают. Обновить `.env.example` и unit tests Settings. Сгенерировать миграцию `uv run alembic revision --autogenerate --rev-id 0003 -m 'create sessions'` на dev/test БД, просмотреть FK/indexes/downgrade.
-- [ ] **4. GREEN:** session/password/context/CLI tests; `scripts/test.sh tests/migrations`; `scripts/typecheck.sh`. Проверить отсутствие raw token и password в MeRead/model repr логов.
-- [ ] **5. Commit:** `git add backend/src/grocery backend/tests .env.example && git commit -m 'feat: add opaque database-backed cookie sessions'`.
+- [x] **4. GREEN:** session/password/context/CLI tests; `scripts/test.sh tests/migrations`; `scripts/typecheck.sh`. Проверить отсутствие raw token и password в MeRead/model repr логов.
+- [x] **5. Commit:** `git add backend/src/grocery backend/tests .env.example && git commit -m 'feat: add opaque database-backed cookie sessions'`.
 
 ## Task 3. Ограничение попыток входа
 
@@ -242,7 +242,7 @@ class LoginResult(BaseModel):
 
 Поиск username case-sensitive, как create_user. LoginResult — внутренний сервисный результат, HTTP его не сериализует.
 
-- [ ] **1. Написать тесты sliding window:** отдельные IP/username ограничения; IP rotation не обходится за счёт общего username bucket, username rotation — общего IP bucket. Retry-After вычисляется по самой поздней из необходимых границ освобождения; reset только по времени. Инъекция monotonic clock, без sleep. При max_keys истёкшие удаляются, новые активные не вытесняют старые; отказ не увеличивает размер. Проверить допускаются ровно пять параллельных попыток одного username.
+- [x] **1. Написать тесты sliding window:** отдельные IP/username ограничения; IP rotation не обходится за счёт общего username bucket, username rotation — общего IP bucket. Retry-After вычисляется по самой поздней из необходимых границ освобождения; reset только по времени. Инъекция monotonic clock, без sleep. При max_keys истёкшие удаляются, новые активные не вытесняют старые; отказ не увеличивает размер. Проверить допускаются ровно пять параллельных попыток одного username.
 
   ```python
   def test_username_limit_works_across_ips() -> None:
@@ -256,10 +256,10 @@ class LoginResult(BaseModel):
 
   Login integration: правильный пароль даёт новую сессию; неверный пароль и отсутствующий username оба AuthError с одинаковым `invalid_credentials`; сессия не создана. Лимит проверяется ДО Argon2 и выдаётся 429-предназначенное исключение даже при правильном пароле после превышения.
 
-- [ ] **2. RED:** `scripts/test.sh tests/unit/test_login_rate_limit.py tests/integration/test_login.py`.
-- [ ] **3. Реализовать limiter:** deque timestamps для prefixed ключей `("username", username)`/`("ip", ip)`, обработка окна и обоих лимитов синхронно в reserve без await. Проверка доступности/ёмкости всех нужных buckets до изменения; append в оба после успешной проверки. Один limiter на процесс через фабрику, читающую Settings; тесты создают изолированный limiter либо очищают кеш фабрики фикстурой. Login последовательно reserve → user_repo.by_username → verify_password → issue_session → построение MeRead для найденного user. Не делать commit; не ловить AuthError внутри UoW так, чтобы вернуть успех.
-- [ ] **4. GREEN:** targeted tests + `scripts/typecheck.sh`. Проверить счётчики переживают rollback запроса, потому что лимитер не в БД.
-- [ ] **5. Commit:** `git add backend/src/grocery/services/auth backend/src/grocery/schemas/auth.py backend/tests/unit/test_login_rate_limit.py backend/tests/integration/test_login.py && git commit -m 'feat: throttle login by username and IP'`.
+- [x] **2. RED:** `scripts/test.sh tests/unit/test_login_rate_limit.py tests/integration/test_login.py`.
+- [x] **3. Реализовать limiter:** deque timestamps для prefixed ключей `("username", username)`/`("ip", ip)`, обработка окна и обоих лимитов синхронно в reserve без await. Проверка доступности/ёмкости всех нужных buckets до изменения; append в оба после успешной проверки. Один limiter на процесс через фабрику, читающую Settings; тесты создают изолированный limiter либо очищают кеш фабрики фикстурой. Login последовательно reserve → user_repo.by_username → verify_password → issue_session → построение MeRead для найденного user. Не делать commit; не ловить AuthError внутри UoW так, чтобы вернуть успех.
+- [x] **4. GREEN:** targeted tests + `scripts/typecheck.sh`. Проверить счётчики переживают rollback запроса, потому что лимитер не в БД.
+- [x] **5. Commit:** `git add backend/src/grocery/services/auth backend/src/grocery/schemas/auth.py backend/tests/unit/test_login_rate_limit.py backend/tests/integration/test_login.py && git commit -m 'feat: throttle login by username and IP'`.
 
 ## Task 4. HTTP-аутентификация, login/logout/me
 
@@ -267,7 +267,7 @@ class LoginResult(BaseModel):
 
 **Produces:** `authenticate` async-yield dependency; `Authenticated = Depends(authenticate, scope="function")`; `DeviceIdDep` для login; `AppSourceDep = Annotated[AppSource, Depends(get_app_source)]` для protected мутаций; SessionCookie security; handlers AuthError 401/TooManyAttemptsError 429.
 
-- [ ] **1. Написать HTTP-тесты:**
+- [x] **1. Написать HTTP-тесты:**
 
   ```python
   async def test_login_cookie_and_me(client: httpx.AsyncClient, registered_user: None) -> None:
@@ -286,8 +286,8 @@ class LoginResult(BaseModel):
 
   `registered_user` создать через create_user в UoW; API client base_url изменить на `https://testserver`, чтобы httpx отправлял Secure cookie. После каждого теста сбрасывать limiter, не отключать его для auth tests. Дополнительная матрица: invalid password/unknown username одинаковый ответ; expired/revoked/random cookie 401; cookie сменяется при повторном login; logout удаляет server session; X-Device-Id отсутствует/whitespace/>128 — 422; отсутствие cookie — 401; login source в body не принимается; context сброшен между запросами и после исключения; X-Forwarded-For не меняет limiter identity.
 
-- [ ] **2. RED:** `scripts/test.sh tests/api/test_auth.py tests/api/test_auth_dependencies.py`.
-- [ ] **3. Реализовать dependencies и роутеры:**
+- [x] **2. RED:** `scripts/test.sh tests/api/test_auth.py tests/api/test_auth_dependencies.py`.
+- [x] **3. Реализовать dependencies и роутеры:**
 
   ```python
   session_cookie = APIKeyCookie(name="__Host-gl_session", scheme_name="SessionCookie", auto_error=False)
@@ -323,13 +323,13 @@ class LoginResult(BaseModel):
   AppSourceDep = Annotated[AppSource, Depends(get_app_source)]
   ```
 
-  Порядок 401/422 дополнительно закреплён тестами, не зависит от тела запроса.
+  Тесты закрепляют 401 до проверки X-Device-Id и схемы синтаксически корректного JSON. Некорректный JSON парсер FastAPI отклоняет до аутентификации с 422 `invalid_request`; эта граница также покрыта регрессионными тестами.
 
   Публичный login router: DbUnitOfWork и DeviceIdDep; вызов auth.login с request.client.host, user input и device_id. Login не использует AppSourceDep и не требует cookie. Login route возвращает result.me; response.set_cookie с параметрами из решений и max_age TTL. Logout защищён, получает исходный token через тот же Security dependency; auth.logout(token), response.delete_cookie с теми же атрибутами, 204. Me route только `return await auth.get_me()`.
 
   При 401 JSON ErrorResponse; password/unknown username тексты одинаковы. 429 добавляет Retry-After. Не возвращать WWW-Authenticate: Bearer для cookie-аутентификации. AuthError может иметь фиксированный code/message в отдельных подклассах CredentialsError/SessionError; generic AuthError default code not_authenticated сохраняет существующие импорты.
-- [ ] **4. GREEN:** auth HTTP tests, existing `test_unit_of_work_dependency.py`, health tests, mypy/import-linter. UoW exit/commit должны выполняться до отправки Set-Cookie и body; в тесте forced commit failure клиент не получает успешный login.
-- [ ] **5. Commit:** `git add backend/src/grocery/api backend/src/grocery/main.py backend/tests/api && git commit -m 'feat: expose cookie login logout and current user API'`.
+- [x] **4. GREEN:** auth HTTP tests, existing `test_unit_of_work_dependency.py`, health tests, mypy/import-linter. UoW exit/commit должны выполняться до отправки Set-Cookie и body; в тесте forced commit failure клиент не получает успешный login.
+- [x] **5. Commit:** `git add backend/src/grocery/api backend/src/grocery/main.py backend/tests/api && git commit -m 'feat: expose cookie login logout and current user API'`.
 
 ## Task 5. REST позиций и тегов
 
@@ -337,7 +337,7 @@ class LoginResult(BaseModel):
 
 **Produces:** все item/tag routes таблицы контракта; `delete_item(id: UUID, source: Source) -> None` в сервисе; SetBought/ClearBought/TagBulk.
 
-- [ ] **1. Написать failing сценарии:** real HTTP batch add → quick-add merge → PATCH с явным quantity=null/note=null/tags=[] → bought → unbought → clear-bought. Проверить числовые quantities, сохранение оригинального имени, source.device_id из header в Event.source, отсутствие device/client ids в ItemRead.sources, count/204. Tag rename в существующий, простое rename, bulk bought/delete, delete tag без удаления items.
+- [x] **1. Написать failing сценарии:** real HTTP batch add → quick-add merge → PATCH с явным quantity=null/note=null/tags=[] → bought → unbought → clear-bought. Проверить числовые quantities, сохранение оригинального имени, source.device_id из header в Event.source, отсутствие device/client ids в ItemRead.sources, count/204. Tag rename в существующий, простое rename, bulk bought/delete, delete tag без удаления items.
 
   ```python
   async def test_invalid_batch_is_atomic(client: httpx.AsyncClient, login_and_list: UUID) -> None:
@@ -361,8 +361,8 @@ class LoginResult(BaseModel):
 
   Интеграционный тест использует существующие service fixtures (перенести общие owner/list fixture в `tests/integration/conftest.py` при необходимости, не импортировать другой тестовый модуль).
 
-- [ ] **2. RED:** `scripts/test.sh tests/api/test_items.py tests/api/test_tags.py tests/integration/test_delete_item.py`.
-- [ ] **3. Реализовать новые схемы:**
+- [x] **2. RED:** `scripts/test.sh tests/api/test_items.py tests/api/test_tags.py tests/integration/test_delete_item.py`.
+- [x] **3. Реализовать новые схемы:**
 
   ```python
   class SetBought(BaseModel):
@@ -395,8 +395,8 @@ class LoginResult(BaseModel):
   ```
 
   PROTECTED_RESPONSES — mapping из Task 1/4 с ErrorResponse для 401/404/409/422/500. Login отдельно объявляет 429. У 204 явно response_class=Response, response_model=None, возвращать Response(status_code=204). Не полагаться на автоматическую сериализацию None. Валидация route inputs до вызова сервиса; весь batch сначала проходит Pydantic. query/path identifiers явно аннотированы UUID; include_bought default False.
-- [ ] **4. GREEN:** targeted + весь API/service набор, mypy/import-linter. OpenAPI response models в signatures не содержат ORM.
-- [ ] **5. Commit:** `git add backend/src/grocery backend/tests/api backend/tests/integration/test_delete_item.py backend/tests/integration/conftest.py && git commit -m 'feat: expose shopping items and tags REST API'`.
+- [x] **4. GREEN:** targeted + весь API/service набор, mypy/import-linter. OpenAPI response models в signatures не содержат ORM.
+- [x] **5. Commit:** `git add backend/src/grocery backend/tests/api backend/tests/integration/test_delete_item.py backend/tests/integration/conftest.py && git commit -m 'feat: expose shopping items and tags REST API'`.
 
 ## Task 6. SSE без долгоживущей сессии БД
 
@@ -405,7 +405,7 @@ class LoginResult(BaseModel):
 **Consumes:** auth.resolve_session/acting_as, ensure_shopping_list_access, event_hub.subscribe, EventRead, EventType.
 **Produces:** `authorize_events(...) -> UUID`; `subscribe_events(...) -> AsyncIterator[Queue[EventRead]]` с request lifetime; `SseQueueDep`; `ShoppingListEvent` discriminated union, `ShoppingListEventRead(RootModel[ShoppingListEvent])`; GET /api/events.
 
-- [ ] **1. Написать тесты авторизации ДО stream:** no/expired/revoked cookie 401 JSON; чужой список 404 JSON; нет shopping_list_id 422; все ответы завершаются без ожидания heartbeat. Happy path через низкоуровневый ASGI harness: дождаться `http.response.start`, затем POST add-items отдельным запросом, получить `data:`; payload type/items/results/id совпадает с сохранённым event. Прервать receive сообщением http.disconnect, дождаться завершения task и проверить освобождение подписки. Session factory counter в harness подтверждает, что при ожидании queue у потока нет открытой сессии БД. Другой список не доставляется; rollback не доставляется.
+- [x] **1. Написать тесты авторизации ДО stream:** no/expired/revoked cookie 401 JSON; чужой список 404 JSON; нет shopping_list_id 422; все ответы завершаются без ожидания heartbeat. Happy path через низкоуровневый ASGI harness: дождаться `http.response.start`, затем POST add-items отдельным запросом, получить `data:`; payload type/items/results/id совпадает с сохранённым event. Прервать receive сообщением http.disconnect, дождаться завершения task и проверить освобождение подписки. Session factory counter в harness подтверждает, что при ожидании queue у потока нет открытой сессии БД. Другой список не доставляется; rollback не доставляется.
 
   ```python
   async def test_sse_gets_committed_event(sse_client: SseClient, client: httpx.AsyncClient, login_and_list: UUID) -> None:
@@ -420,8 +420,8 @@ class LoginResult(BaseModel):
 
   SseClient — тестовый ASGI helper `tests/support_sse.py`, не production. connect запускает app(scope, receive, send) в task, `started()` ждёт capture response.start, next_data парсит JSON из завершённого SSE-frame, __aexit__ отправляет disconnect, отменяет и await task с timeout. Обычный httpx ASGITransport буферизует бесконечный ответ — для happy path его не использовать. Все waits ограничены timeout; не зависать на тестах.
 
-- [ ] **2. RED:** `scripts/test.sh tests/api/test_events.py`.
-- [ ] **3. Реализовать dependency и типы:**
+- [x] **2. RED:** `scripts/test.sh tests/api/test_events.py`.
+- [x] **3. Реализовать dependency и типы:**
 
   ```python
   async def authorize_events(
@@ -449,7 +449,7 @@ class LoginResult(BaseModel):
 
   SseQueueDep = Annotated[Queue[EventRead], Depends(subscribe_events, scope="request")]
 
-  @router.get("/events", response_class=EventSourceResponse, responses=PROTECTED_RESPONSES)
+  @router.get("/events", response_class=EventSourceResponse, responses=SSE_PROTECTED_RESPONSES)
   async def events(queue: SseQueueDep) -> AsyncIterable[ShoppingListEventRead]:
       while True:
           snapshot = await queue.get()
@@ -457,8 +457,8 @@ class LoginResult(BaseModel):
   ```
 
   Yield typed data, а не ServerSentEvent с Any payload: FastAPI валидирует data по annotation и добавляет схемы в OpenAPI. Heartbeat/headers встроены. Cancellation завершает request-scoped dependency и освобождает subscribe context; обычные авторизованные роутеры по-прежнему используют function scope для UoW. Не добавлять собственные heartbeat tasks, replay БД или бессрочный DB generator.
-- [ ] **4. GREEN:** events API/hub/events integration tests; OpenAPI содержит text/event-stream и ShoppingListEventRead с discriminator/вариантами; stream не удерживает DB. Один smoke тест heartbeat может дождаться реальных 15 секунд с timeout 20, либо heartbeat проверить вручную через curl — не monkeypatch private FastAPI constants.
-- [ ] **5. Commit:** `git add backend/src/grocery/api backend/src/grocery/schemas/events.py backend/src/grocery/main.py backend/tests/api/test_events.py backend/tests/support_sse.py && git commit -m 'feat: stream authorized shopping events over SSE'`.
+- [x] **4. GREEN:** events API/hub/events integration tests; OpenAPI содержит text/event-stream и ShoppingListEventRead с discriminator/вариантами; stream не удерживает DB. Один smoke тест heartbeat может дождаться реальных 15 секунд с timeout 20, либо heartbeat проверить вручную через curl — не monkeypatch private FastAPI constants.
+- [x] **5. Commit:** `git add backend/src/grocery/api backend/src/grocery/schemas/events.py backend/src/grocery/main.py backend/tests/api/test_events.py backend/tests/support_sse.py && git commit -m 'feat: stream authorized shopping events over SSE'`.
 
 ## Task 7. Экспорт OpenAPI, TypeScript и CI
 
@@ -466,7 +466,7 @@ class LoginResult(BaseModel):
 
 **Produces:** `python -m grocery export-openapi [--output PATH]`; `scripts/api.sh` для генерации, `scripts/api.sh --check` для немутирующей проверки; контракт обоих артефактов под версионным контролем.
 
-- [ ] **1. Написать contract tests:** есть все пути HTTP таблицы с явными response/schema/security; нет schemas с -Input/-Output, стандартного HTTPValidationError и raw session token в responses; SSE union компонент есть; ItemRead.quantity JSON schema number|null. CLI export работает без getpass, доступа к БД и lifespan; stdout — только JSON, повторные экспорты побайтово одинаковы. Invalid output path — ненулевой exit, без молчаливого успеха.
+- [x] **1. Написать contract tests:** есть все пути HTTP таблицы с явными response/schema/security; нет schemas с -Input/-Output, стандартного HTTPValidationError и raw session token в responses; SSE union компонент есть; ItemRead.quantity JSON schema number|null. CLI export работает без getpass, доступа к БД и lifespan; stdout — только JSON, повторные экспорты побайтово одинаковы. Invalid output path — ненулевой exit, без молчаливого успеха.
 
   ```python
   def test_read_quantity_schema_is_numeric() -> None:
@@ -481,8 +481,8 @@ class LoginResult(BaseModel):
 
   Проверить cookie security login/health пустая, остальные protected включая events имеют SessionCookie. OpenAPI X-Device-Id required на всех мутациях. AuthError/DomainError schemas объявлены через responses, автоматический 422 переопределён.
 
-- [ ] **2. RED:** `scripts/test.sh unit -k openapi`; запуск пока отсутствующей export-openapi команды.
-- [ ] **3. Реализовать экспорт и генерацию:** `__main__.main` dispatch по subcommand ДО getpass/configure_engine. `export_openapi() -> str` создаёт app, получает app.openapi(), задаёт schema["info"]["version"]=importlib.metadata.version("grocery"), JSON indent=2/sort_keys=True/ensure_ascii=False + newline. Не добавлять runtime timestamps/host-dependent servers. Settings можно загрузить для create_app. Экспортному subprocess в scripts/api.sh задать `APP_PUBLIC_URL=http://localhost` и `DB_URL=postgresql+asyncpg://unused:unused@127.0.0.1:1/unused`: это фиксированные значения только для генерации, соединение не открывается; серверные секреты не нужны. CLI-тесты используют эти же значения через monkeypatch окружения. Чужой DB_URL не должен запускать configure_engine.
+- [x] **2. RED:** `scripts/test.sh unit -k openapi`; запуск пока отсутствующей export-openapi команды.
+- [x] **3. Реализовать экспорт и генерацию:** `__main__.main` dispatch по subcommand ДО getpass/configure_engine. `export_openapi() -> str` создаёт app, получает app.openapi(), задаёт schema["info"]["version"]=importlib.metadata.version("grocery"), JSON indent=2/sort_keys=True/ensure_ascii=False + newline. Не добавлять runtime timestamps/host-dependent servers. Settings можно загрузить для create_app. Экспортному subprocess в scripts/api.sh задать `APP_PUBLIC_URL=http://localhost` и `DB_URL=postgresql+asyncpg://unused:unused@127.0.0.1:1/unused`: это фиксированные значения только для генерации, соединение не открывается; серверные секреты не нужны. CLI-тесты используют эти же значения через monkeypatch окружения. Чужой DB_URL не должен запускать configure_engine.
 
   ```json
   {
@@ -524,16 +524,16 @@ class LoginResult(BaseModel):
   ```
 
   Проверить реально сгенерированные union/discriminator types; не заменять их ручными interfaces. OpenAPI SSE itemSchema может не попасть в тип ответа paths у генератора, но именованный ShoppingListEventRead обязан присутствовать в components и успешно сужаться по type.
-- [ ] **4. GREEN:** `scripts/api.sh`, `scripts/api.sh --check`, unit OpenAPI tests, `scripts/typecheck.sh`, shellcheck; проверить генерация не требует Docker. Свежий `scripts/check.sh` на полном дереве и `git diff --check`.
-- [ ] **5. Commit:** `git add backend/src/grocery/__main__.py backend/tests/unit/test_openapi.py scripts frontend Makefile .github/workflows/ci.yml README.md && git commit -m 'feat: generate and verify typed frontend API contract'`.
+- [x] **4. GREEN:** `scripts/api.sh`, `scripts/api.sh --check`, unit OpenAPI tests, `scripts/typecheck.sh`, shellcheck; проверить генерация не требует Docker. Свежий `scripts/check.sh` на полном дереве и `git diff --check`.
+- [x] **5. Commit:** `git add backend/src/grocery/__main__.py backend/tests/unit/test_openapi.py scripts frontend Makefile .github/workflows/ci.yml README.md && git commit -m 'feat: generate and verify typed frontend API contract'`.
 
 ## Приёмка этапа и передача дальше
 
-- [ ] Запустить `scripts/fmt.sh`, `scripts/api.sh`, затем `scripts/check.sh`; все исходные domain/API/CLI tests, новые session/API/SSE tests и миграции зелёные, API check не изменяет файлы.
-- [ ] Независимое ревью через Superpowers requesting-code-review: cookie flags/hash/expiry, rate-limit concurrency, dependency scopes, 401/422 ordering, SSE authorization before headers, контракты schemas. Замечания исправить через failing regression test и повторить затронутые проверки.
-- [ ] Swagger: login/public security, cookie security protected routes, X-Device-Id, общий ErrorResponse. API requests вручную через https test host или локальный HTTPS proxy; raw токен/пароль не помещать в коммит/логи/скриншоты.
-- [ ] Ручной SSE smoke: login, cookie jar, `curl -N` к /api/events?shopping_list_id=..., отдельный POST quick-add; видно событие, idle heartbeat, disconnect освобождает подписку. После logout новое подключение с прежней cookie — 401.
-- [ ] Обновить статус этапа 3 в `docs/superpowers/plans/README.md` только после свежего зелёного scripts/check.sh; записать число тестов и итог ревью в этот план.
+- [x] `scripts/fmt.sh`, `scripts/api.sh` и свежий `scripts/check.sh` выполнены; все исходные domain/API/CLI tests, новые session/API/SSE tests и миграции зелёные, API check не изменяет файлы.
+- [x] Независимое итоговое ревью выполнено: cookie flags/hash/expiry, rate-limit concurrency, dependency scopes, 401/422 ordering, SSE authorization before headers, контракты schemas. Critical/Important отсутствуют; единственное Minor — формулировка порядка аутентификации/парсинга в плане — исправлено документацией.
+- [x] Контракт для Swagger проверен OpenAPI-тестами: login/public security, cookie security protected routes, X-Device-Id, общий ErrorResponse. Проверка интерфейса Swagger UI не заявляется. HTTP-запросы проверены на реальном HTTPS-сокете; raw токен/пароль не сохранялись в коммитах/логах/скриншотах.
+- [x] HTTPS SSE smoke выполнен HTTPX streaming по реальному TLS-сокету (эквивалент `curl -N`): login/cookie jar, отдельный POST quick-add, committed event, реальный heartbeat через 15 секунд, logout и 401 при новом соединении с отозванной cookie. Освобождение подписки при disconnect подтверждено API-тестами.
+- [x] Статус этапа 3 в `docs/superpowers/plans/README.md` обновлён после свежего зелёного scripts/check.sh; число тестов и итог ревью записаны ниже.
 - [ ] Следующий план — MCP/PAT; он переиспользует auth context, токен-хеш helper и те же сервисы списка. Деплой проверит прокси/SSE отдельно, не заявлять эту проверку выполненной локальными тестами.
 
 ## Self-review плана
@@ -561,3 +561,39 @@ class LoginResult(BaseModel):
 - [openapi-typescript changelog](https://github.com/openapi-ts/openapi-typescript/blob/main/packages/openapi-typescript/CHANGELOG.md): версия 7.13.0.
 
 Дополнительно сверены установленные FastAPI routing.py/sse.py и текущие API/service fixtures; отдельный frontend-каркас не предполагается существующим.
+
+## Завершение — 2026-09-30
+
+Этап 3 выполнен на ветке `feat/rest-api-sessions`; диапазон реализации `2eb97a3..61ed3af`.
+Все семь задач прошли отдельные проверки соответствия плану и качества кода и получили
+одобрение. Независимое итоговое ревью всего диапазона: **Ready to merge — Yes**,
+Critical/Important отсутствуют. Единственное Minor о безусловном приоритете 401 исправлено:
+аутентификация предшествует проверке заголовка и схемы корректного JSON, а malformed JSON
+отклоняется транспортным парсером с 422. Иллюстрация SSE использует реализованную
+`SSE_PROTECTED_RESPONSES` с JSON-ошибками.
+
+Контроллер на `61ed3af` заново выполнил `env -u VIRTUAL_ENV scripts/check.sh`:
+**394 теста прошли за 18.26 с**; Ruff проверил 97 файлов, mypy — 94 файла,
+строгий TypeScript прошёл, все четыре import-linter контракта соблюдены.
+Реальные PostgreSQL-тесты и migration stairway/model checks зелёные. OpenAPI/TS freshness
+не изменяет артефакты; отдельный временный checkout подтвердил ошибки при дрейфе API,
+каждого артефакта и отсутствии каждого файла с неизменными контрольными суммами.
+
+Контроллер выполнил smoke на реальном Uvicorn с TLS и свежем PostgreSQL 18 после миграций:
+secure-cookie login, me/list, quick-add с числовым quantity, committed SSE event,
+реальный 15-секундный heartbeat, bought/clear, logout и новое SSE-соединение
+с отозванной cookie → 401. Использован HTTPX streaming по TLS-сокету, эквивалентный
+`curl -N`; ресурсы очищены. Swagger security/параметры/ошибки подтверждены OpenAPI-тестами,
+визуальная проверка Swagger UI не заявляется. Проверка развёрнутого proxy/Cloudflare/SSE
+и trusted-proxy настроек остаётся работой этапа 5.
+
+### Принятые решения при реализации
+
+| Решение | Причина | Цена пересмотра / следствие |
+|---|---|---|
+| Task 5: `TagUpdate` использует `extra=forbid`, отклоняя неизвестные/поддельные поля HTTP input. | Сохраняет достоверность Source и выполняет матрицу некорректного тела запроса. | Клиенты с лишними полями должны удалить их. |
+| Общий probe-route helper перенесён в `tests/support_api.py`; существующий тест импортирует его. | Устраняет импорты между тестами и дублирование probe-роутов; production их не содержит. | При пересмотре потребуется отменить небольшой перенос test helper. |
+| Неизвестный generic DomainError возвращает безопасный `internal_error` 500 без диагностических деталей. | Соответствует контракту неожиданных ошибок и не раскрывает новые ошибки без mapping. | Новому подтипу нужен явный mapping, чтобы вернуть доменный HTTP-ответ. |
+| Dummy password hash инициализируется лениво и асинхронно; helper предоставляет `initialize_passwords()`, Task 4 прогревает его в lifespan. | Argon2 не блокирует event loop; первый неизвестный пользователь не платит за холодное создание хеша. | Startup выполняет одно дополнительное Argon2-хеширование; при пересмотре меняется инициализация helper. |
+| Сохранён FastAPI malformed-JSON 422 до auth; 401 предшествует header/valid-JSON schema validation, Task 5 добавляет malformed-body regression. | Спецификация требует cookie-защиту и dependency auth; собственный pre-auth transport routing дублировал бы транзакционную инфраструктуру. | Неавторизованный malformed request получает 422 вместо 401; изменение потребует переработки слоя маршрутизации. Итоговое ревью приняло эту границу. |
+| SSE ошибки описаны как `application/json`; отдельная карта централизованно производна от общих protected responses без model-driven event-stream inference. | Native EventSourceResponse иначе ошибочно описывает ошибки до начала потока как streams. | Небольшой mapping adapter может потребовать пересмотра при обновлении FastAPI. |

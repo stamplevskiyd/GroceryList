@@ -8,18 +8,20 @@ from grocery.domain.errors import ConflictError, InvalidInputError
 from grocery.schemas.shopping_lists import MemberCreate, ShoppingListCreate
 from grocery.schemas.users import UserCreate
 from grocery.services.auth.context import acting_as, get_current_user
-from grocery.services.auth.errors import AuthError
+from grocery.services.auth.errors import AuthError, TooManyAttemptsError
 from grocery.services.auth.passwords import hash_password, initialize_passwords, verify_password
-from grocery.services.auth.sessions import get_me, issue_session, logout, resolve_session
+from grocery.services.auth.sessions import get_me, issue_session, login, logout, resolve_session
 
 __all__ = [
     "AuthError",
+    "TooManyAttemptsError",
     "acting_as",
     "create_user",
     "get_current_user",
     "get_me",
     "initialize_passwords",
     "issue_session",
+    "login",
     "logout",
     "resolve_session",
     "verify_password",

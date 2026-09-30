@@ -1,5 +1,4 @@
 import asyncio
-from collections.abc import Iterator
 from decimal import Decimal
 from uuid import UUID, uuid7
 
@@ -17,24 +16,6 @@ from grocery.services.auth import acting_as, create_user
 
 PHONE = AppSource(device_id="phone")
 CLAUDE = McpSource(client_id="claude", client_name="Claude")
-
-
-@pytest.fixture
-async def owner() -> User:
-    async with unit_of_work():
-        return await create_user("anna", "password")
-
-
-@pytest.fixture
-def authenticated(owner: User) -> Iterator[None]:
-    with acting_as(owner):
-        yield
-
-
-@pytest.fixture
-async def shopping_list_id(authenticated: None) -> UUID:
-    async with unit_of_work():
-        return await service.get_default_shopping_list_id()
 
 
 async def test_batch_merge_and_one_event(shopping_list_id: UUID) -> None:

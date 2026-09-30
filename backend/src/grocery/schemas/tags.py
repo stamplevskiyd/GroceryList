@@ -1,6 +1,7 @@
+from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, ConfigDict, computed_field
 
 from grocery.domain.normalization import normalize_name
 from grocery.schemas.items import Name, TagRead
@@ -20,7 +21,12 @@ class TagCreate(TagName):
 
 
 class TagUpdate(TagName):
-    pass
+    model_config = ConfigDict(extra="forbid")
+
+
+class TagBulk(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    action: Literal["mark_bought", "delete_items"]
 
 
 class TagUsageRead(TagRead):

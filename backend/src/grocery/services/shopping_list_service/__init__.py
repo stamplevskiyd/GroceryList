@@ -247,6 +247,11 @@ async def remove_items(
     return await _delete_items(shopping_list_id, items, source)
 
 
+async def delete_item(id: UUID, source: Source) -> None:
+    item = await _item_for_update(id)
+    await _delete_items(item.shopping_list_id, [item], source)
+
+
 async def clear_bought(shopping_list_id: UUID, source: Source) -> int:
     await ensure_shopping_list_access(shopping_list_id, lock=True)
     items = [

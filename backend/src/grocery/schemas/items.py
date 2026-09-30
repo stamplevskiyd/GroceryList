@@ -97,6 +97,18 @@ class AddItems(BaseModel):
     items: list[ItemCreate] = Field(min_length=1)
 
 
+class SetBought(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    shopping_list_id: UUID
+    ids: list[UUID] = Field(min_length=1)
+    bought: bool
+
+
+class ClearBought(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    shopping_list_id: UUID
+
+
 class AddItemResult(BaseModel):
     status: AddStatus
     item: ItemRead

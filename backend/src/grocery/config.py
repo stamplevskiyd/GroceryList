@@ -5,7 +5,7 @@
 
 from functools import lru_cache
 
-from pydantic import BaseModel, HttpUrl, PostgresDsn
+from pydantic import BaseModel, Field, HttpUrl, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,6 +17,13 @@ class AppSettings(BaseModel):
 
 class DbSettings(BaseModel):
     url: PostgresDsn
+
+
+class AuthSettings(BaseModel):
+    session_ttl_seconds: int = Field(default=2592000, gt=0)
+    login_username_limit: int = Field(default=5, gt=0)
+    login_ip_limit: int = Field(default=30, gt=0)
+    login_window_seconds: int = Field(default=300, gt=0)
 
 
 class Settings(BaseSettings):
@@ -31,6 +38,7 @@ class Settings(BaseSettings):
 
     app: AppSettings
     db: DbSettings
+    auth: AuthSettings = Field(default_factory=AuthSettings)
 
 
 @lru_cache

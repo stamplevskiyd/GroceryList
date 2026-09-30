@@ -1,5 +1,7 @@
 """Все ORM-модели. Импорт пакета регистрирует их в Base.metadata (нужно Alembic)."""
 
+from grocery.db.models.event import Event
+from grocery.db.models.shopping import Item, ShoppingList, ShoppingListMember, Tag
 from grocery.db.models.user import User
 
-__all__ = ["User"]
+__all__ = ["Event", "Item", "ShoppingList", "ShoppingListMember", "Tag", "User"]

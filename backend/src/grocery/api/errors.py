@@ -35,6 +35,20 @@ PROTECTED_RESPONSES: dict[int | str, dict[str, object]] = {
     status: {"model": ErrorResponse, "description": _ERROR_DESCRIPTIONS[status]}
     for status in (401, 404, 409, 422, 500)
 }
+# With a streaming response class, FastAPI infers text/event-stream for additional
+# response models too. Authorization fails before streaming and returns JSON, so
+# reference the shared component (registered by the ordinary REST routes) explicitly.
+SSE_PROTECTED_RESPONSES: dict[int | str, dict[str, object]] = {
+    status: {
+        "description": response["description"],
+        "content": {
+            "application/json": {
+                "schema": {"$ref": f"#/components/schemas/{ErrorResponse.__name__}"}
+            }
+        },
+    }
+    for status, response in PROTECTED_RESPONSES.items()
+}
 PUBLIC_RESPONSES: dict[int | str, dict[str, object]] = {
     status: {"model": ErrorResponse, "description": _ERROR_DESCRIPTIONS[status]}
     for status in (401, 422, 429, 500)

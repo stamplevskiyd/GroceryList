@@ -10,7 +10,7 @@ from fastapi import FastAPI
 
 from grocery.api.errors import register_error_handlers
 from grocery.api.routers import auth as auth_router
-from grocery.api.routers import health, items, me, tags
+from grocery.api.routers import events, health, items, me, tags
 from grocery.config import get_settings
 from grocery.db.session import configure_engine, dispose_engine
 from grocery.services import auth
@@ -37,4 +37,5 @@ def create_app() -> FastAPI:
     app.include_router(me.router, prefix="/api")
     app.include_router(items.router, prefix="/api")
     app.include_router(tags.router, prefix="/api")
+    app.include_router(events.router, prefix="/api")
     return app

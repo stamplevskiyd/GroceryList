@@ -3,3 +3,4 @@
 set -euo pipefail
 cd "$(dirname "$0")/../backend"
 uv run mypy
+npm --prefix ../frontend run typecheck

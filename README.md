@@ -9,10 +9,11 @@ PWA-список покупок с MCP-сервером: ассистент (Cla
 
 ## Разработка
 
-Нужны [uv](https://docs.astral.sh/uv/) ≥ 0.12 и Docker.
+Нужны [uv](https://docs.astral.sh/uv/) ≥ 0.12, Docker и Node.js 22 с npm.
 
 ```bash
 cp .env.example .env
+npm ci --prefix frontend
 docker compose up -d postgres
 cd backend
 uv sync
@@ -41,6 +42,26 @@ uv run python -m grocery create-user anna
 и [REST API позиций и тегов с SSE-обновлениями](docs/api.md). PWA и подключение ассистентов
 идут последующими этапами плана.
 
+Cookie-сессии всегда `Secure`, `HttpOnly`, `SameSite=Lax`. Для ручного входа и запросов
+с cookie используйте HTTPS base URL (тестовый хост либо локальный HTTPS-прокси),
+cookie jar и `X-Device-Id` на всех мутациях. Публичный health доступен и по HTTP.
+
+OpenAPI и типы TypeScript сохранены в `frontend/src/api/`. После изменения API выполните
+`make api` и сохраните оба файла. Генерация работает без Docker, БД и запуска приложения:
+
+```bash
+make api
+scripts/api.sh --check
+APP_PUBLIC_URL=http://localhost \
+  DB_URL=postgresql+asyncpg://unused:unused@127.0.0.1:1/unused \
+  uv run --project backend python -m grocery export-openapi --output /tmp/openapi.json
+```
+
+Без `--output` команда выводит только JSON в stdout. Экспорт использует версию Python-пакета,
+поэтому `APP_VERSION` не меняет контракт. Проверка `--check` сравнивает оба артефакта
+с новой генерацией во временной директории и не перезаписывает сохранённые файлы.
+Сейчас frontend содержит только инструменты контракта; React/PWA добавятся на этапе 7.
+
 ## Проверки
 
 Все команды — в `scripts/`, Makefile их только вызывает (ADR-0007):
@@ -49,7 +70,8 @@ uv run python -m grocery create-user anna
 |---|---|
 | `make fmt` | форматирование и автоисправления ruff |
 | `make lint` | ruff, границы слоёв (import-linter), shellcheck |
-| `make typecheck` | mypy strict |
+| `make typecheck` | mypy strict и TypeScript strict |
+| `make api` / `scripts/api.sh --check` | генерация / проверка актуальности OpenAPI и TS |
 | `make test` / `scripts/test.sh unit` | все тесты / только быстрые, без Docker |
 | `make check` | всё вместе; код готов, когда она зелёная |
 

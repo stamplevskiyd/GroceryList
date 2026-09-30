@@ -1,0 +1,13 @@
+{
+  "name": "grocery-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "api": "openapi-typescript src/api/openapi.json -o src/api/schema.d.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,5 +1,4 @@
 from datetime import datetime
-from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
@@ -15,17 +14,17 @@ from pydantic import (
 
 from grocery.domain.enums import AddStatus
 from grocery.domain.normalization import clean_name, normalize_name, normalize_quantity
+from grocery.schemas.common import PositiveQuantity, Quantity
 from grocery.schemas.sources import ItemSource
 
 Name = Annotated[str, AfterValidator(clean_name), Field(min_length=1, max_length=255)]
-Quantity = Annotated[Decimal, Field(gt=0, allow_inf_nan=False)]
 
 
 class ItemCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: Name
-    quantity: Quantity | None = None
+    quantity: PositiveQuantity | None = None
     unit: str | None = Field(default=None, max_length=64)
     tags: list[Name] = Field(default_factory=list)
     note: str | None = None
@@ -45,7 +44,7 @@ class ItemUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: Name | None = None
-    quantity: Quantity | None = None
+    quantity: PositiveQuantity | None = None
     unit: str | None = Field(default=None, max_length=64)
     tags: list[Name] | None = None
     note: str | None = None
@@ -81,7 +80,7 @@ class ItemRead(BaseModel):
     id: UUID
     shopping_list_id: UUID
     name: str
-    quantity: Decimal | None
+    quantity: Quantity | None
     unit: str | None
     note: str | None
     tags: list[TagRead]
@@ -105,7 +104,7 @@ class AddItemResult(BaseModel):
 
 class ParsedItem(BaseModel):
     name: str
-    quantity: Decimal | None = None
+    quantity: Quantity | None = None
     unit: str | None = None
 
 

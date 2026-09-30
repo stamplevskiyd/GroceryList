@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from grocery.api.errors import register_error_handlers
 from grocery.api.routers import health
 from grocery.config import get_settings
 from grocery.db.session import configure_engine, dispose_engine
@@ -26,5 +27,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     app = FastAPI(title="GroceryList", version=get_settings().app.version, lifespan=lifespan)
+    register_error_handlers(app)
     app.include_router(health.router, prefix="/api")
     return app

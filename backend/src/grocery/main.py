@@ -3,6 +3,7 @@
 Запуск: uvicorn grocery.main:create_app --factory
 """
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -10,9 +11,10 @@ from fastapi import FastAPI
 
 from grocery.api.errors import register_error_handlers
 from grocery.api.routers import auth as auth_router
-from grocery.api.routers import events, health, items, me, tags
+from grocery.api.routers import events, health, items, me, tags, tokens
 from grocery.config import get_settings
 from grocery.db.session import configure_engine, dispose_engine
+from grocery.mcp_server.server import create_mcp
 from grocery.services import auth
 
 
@@ -20,10 +22,13 @@ from grocery.services import auth
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Неполная конфигурация роняет приложение здесь, при старте (ADR-0006).
     settings = get_settings()
+    logging.basicConfig(level=settings.app.log_level)
+    logging.getLogger().setLevel(settings.app.log_level)
     configure_engine(str(settings.db.url))
     try:
         await auth.initialize_passwords()
-        yield
+        async with app.state.mcp.session_manager.run():
+            yield
     finally:
         await dispose_engine()
 
@@ -38,4 +43,8 @@ def create_app() -> FastAPI:
     app.include_router(items.router, prefix="/api")
     app.include_router(tags.router, prefix="/api")
     app.include_router(events.router, prefix="/api")
+    app.include_router(tokens.router, prefix="/api")
+    server, mcp_app = create_mcp(get_settings().app)
+    app.state.mcp = server
+    app.mount("/", mcp_app)
     return app

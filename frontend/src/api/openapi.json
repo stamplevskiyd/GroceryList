@@ -94,7 +94,7 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/EventPayload"
+            "$ref": "#/components/schemas/ItemsPayload"
           },
           "shopping_list_id": {
             "format": "uuid",
@@ -229,46 +229,6 @@
           "message"
         ],
         "title": "ErrorResponse",
-        "type": "object"
-      },
-      "EventPayload": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/ItemRead"
-            },
-            "title": "Items",
-            "type": "array"
-          },
-          "previous_tag": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/TagRead"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "results": {
-            "items": {
-              "$ref": "#/components/schemas/AddItemResult"
-            },
-            "title": "Results",
-            "type": "array"
-          },
-          "tag": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/TagRead"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "title": "EventPayload",
         "type": "object"
       },
       "HealthRead": {
@@ -566,7 +526,7 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/EventPayload"
+            "$ref": "#/components/schemas/ItemsPayload"
           },
           "shopping_list_id": {
             "format": "uuid",
@@ -627,7 +587,7 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/EventPayload"
+            "$ref": "#/components/schemas/ItemsAddedPayload"
           },
           "shopping_list_id": {
             "format": "uuid",
@@ -675,6 +635,22 @@
         "title": "ItemsAddedEvent",
         "type": "object"
       },
+      "ItemsAddedPayload": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/AddItemResult"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "title": "ItemsAddedPayload",
+        "type": "object"
+      },
       "ItemsBoughtEvent": {
         "properties": {
           "created_at": {
@@ -688,7 +664,7 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/EventPayload"
+            "$ref": "#/components/schemas/ItemsPayload"
           },
           "shopping_list_id": {
             "format": "uuid",
@@ -749,7 +725,7 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/EventPayload"
+            "$ref": "#/components/schemas/ItemsPayload"
           },
           "shopping_list_id": {
             "format": "uuid",
@@ -797,6 +773,22 @@
         "title": "ItemsDeletedEvent",
         "type": "object"
       },
+      "ItemsPayload": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ItemRead"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ItemsPayload",
+        "type": "object"
+      },
       "ItemsUnboughtEvent": {
         "properties": {
           "created_at": {
@@ -810,7 +802,7 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/EventPayload"
+            "$ref": "#/components/schemas/ItemsPayload"
           },
           "shopping_list_id": {
             "format": "uuid",
@@ -1147,6 +1139,22 @@
         "title": "TagBulk",
         "type": "object"
       },
+      "TagChangedPayload": {
+        "properties": {
+          "previous_tag": {
+            "$ref": "#/components/schemas/TagRead"
+          },
+          "tag": {
+            "$ref": "#/components/schemas/TagRead"
+          }
+        },
+        "required": [
+          "tag",
+          "previous_tag"
+        ],
+        "title": "TagChangedPayload",
+        "type": "object"
+      },
       "TagDeletedEvent": {
         "properties": {
           "created_at": {
@@ -1160,7 +1168,7 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/EventPayload"
+            "$ref": "#/components/schemas/TagDeletedPayload"
           },
           "shopping_list_id": {
             "format": "uuid",
@@ -1208,6 +1216,18 @@
         "title": "TagDeletedEvent",
         "type": "object"
       },
+      "TagDeletedPayload": {
+        "properties": {
+          "tag": {
+            "$ref": "#/components/schemas/TagRead"
+          }
+        },
+        "required": [
+          "tag"
+        ],
+        "title": "TagDeletedPayload",
+        "type": "object"
+      },
       "TagRead": {
         "properties": {
           "id": {
@@ -1240,7 +1260,7 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/EventPayload"
+            "$ref": "#/components/schemas/TagChangedPayload"
           },
           "shopping_list_id": {
             "format": "uuid",
@@ -1341,7 +1361,7 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/EventPayload"
+            "$ref": "#/components/schemas/TagChangedPayload"
           },
           "shopping_list_id": {
             "format": "uuid",
@@ -1387,6 +1407,131 @@
           "created_at"
         ],
         "title": "TagsMergedEvent",
+        "type": "object"
+      },
+      "TokenCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "TokenCreate",
+        "type": "object"
+      },
+      "TokenIssued": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "token": {
+            "format": "password",
+            "title": "Token",
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "last_used_at",
+          "revoked_at",
+          "token"
+        ],
+        "title": "TokenIssued",
+        "type": "object"
+      },
+      "TokenRead": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "last_used_at",
+          "revoked_at"
+        ],
+        "title": "TokenRead",
         "type": "object"
       }
     },
@@ -2887,6 +3032,275 @@
         "summary": "Bulk",
         "tags": [
           "tags"
+        ]
+      }
+    },
+    "/api/tokens": {
+      "get": {
+        "operationId": "get_api_tokens_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TokenRead"
+                  },
+                  "title": "Response Get Api Tokens Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Требуется вход или неверные учётные данные"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Объект не найден"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Конфликт"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Некорректный запрос"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Внутренняя ошибка"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Get",
+        "tags": [
+          "tokens"
+        ]
+      },
+      "post": {
+        "operationId": "create_api_tokens_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Device-Id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenIssued"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Требуется вход или неверные учётные данные"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Объект не найден"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Конфликт"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Некорректный запрос"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Внутренняя ошибка"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Create",
+        "tags": [
+          "tokens"
+        ]
+      }
+    },
+    "/api/tokens/{id}": {
+      "delete": {
+        "operationId": "revoke_api_tokens__id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Device-Id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Требуется вход или неверные учётные данные"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Объект не найден"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Конфликт"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Некорректный запрос"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Внутренняя ошибка"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Revoke",
+        "tags": [
+          "tokens"
         ]
       }
     }

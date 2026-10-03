@@ -51,3 +51,114 @@ def test_stairway(empty_database_url: str) -> None:
         command.upgrade(config, revision.revision)
         command.downgrade(config, "-1")
         command.upgrade(config, revision.revision)
+
+
+async def _seed_legacy_event_payloads(url: str) -> None:
+    import json
+    from datetime import UTC, datetime
+    from uuid import uuid7
+
+    from grocery.domain.enums import EventType
+    from grocery.schemas.items import ItemRead
+    from grocery.schemas.tags import TagRead
+
+    engine = create_async_engine(url)
+    user_id, list_id = uuid7(), uuid7()
+    item = ItemRead(
+        id=uuid7(),
+        shopping_list_id=list_id,
+        name="Лук",
+        quantity=None,
+        unit=None,
+        note=None,
+        tags=[],
+        sources=[],
+        is_bought=False,
+        bought_at=None,
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+    )
+    tag = TagRead(id=uuid7(), name="Овощи").model_dump(mode="json")
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(
+                text(
+                    "INSERT INTO users (id, username, password_hash) "
+                    "VALUES (:id, 'migration', 'hash')"
+                ),
+                {"id": user_id},
+            )
+            await conn.execute(
+                text(
+                    "INSERT INTO shopping_lists (id, owner_id, name) "
+                    "VALUES (:id, :owner, 'Покупки')"
+                ),
+                {"id": list_id, "owner": user_id},
+            )
+            for type in EventType:
+                payload: dict[str, object] = {
+                    "items": [],
+                    "results": [],
+                    "tag": None,
+                    "previous_tag": None,
+                }
+                if type == EventType.ITEMS_ADDED:
+                    payload["results"] = [
+                        {"status": "created", "item": item.model_dump(mode="json")}
+                    ]
+                elif type in (EventType.TAG_RENAMED, EventType.TAGS_MERGED):
+                    payload.update(tag=tag, previous_tag=tag)
+                elif type == EventType.TAG_DELETED:
+                    payload["tag"] = tag
+                else:
+                    payload["items"] = [item.model_dump(mode="json")]
+                await conn.execute(
+                    text(
+                        "INSERT INTO events (id, shopping_list_id, user_id, type, source, payload) "
+                        "VALUES (:id, :list, :user, :type, "
+                        "CAST(:source AS jsonb), CAST(:payload AS jsonb))"
+                    ),
+                    {
+                        "id": uuid7(),
+                        "list": list_id,
+                        "user": user_id,
+                        "type": type.value,
+                        "source": json.dumps({"kind": "app", "device_id": "phone"}),
+                        "payload": json.dumps(payload),
+                    },
+                )
+    finally:
+        await engine.dispose()
+
+
+async def _validate_migrated_events(url: str) -> list[dict[str, object]]:
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+
+    from grocery.db.models import Event
+    from grocery.schemas.events import EventRead, ShoppingListEventRead
+
+    engine = create_async_engine(url)
+    try:
+        async with async_sessionmaker(engine)() as session:
+            events = list(await session.scalars(select(Event).order_by(Event.type)))
+            assert len(events) == 9
+            return [
+                ShoppingListEventRead.model_validate(
+                    EventRead.model_validate(event).model_dump()
+                ).model_dump(mode="json")
+                for event in events
+            ]
+    finally:
+        await engine.dispose()
+
+
+def test_existing_event_payloads_survive_upgrade_and_downgrade(empty_database_url: str) -> None:
+    config = alembic_config(empty_database_url)
+    command.upgrade(config, "0004")
+    asyncio.run(_seed_legacy_event_payloads(empty_database_url))
+    command.upgrade(config, "head")
+    first = asyncio.run(_validate_migrated_events(empty_database_url))
+    command.downgrade(config, "0004")
+    command.upgrade(config, "head")
+    assert asyncio.run(_validate_migrated_events(empty_database_url)) == first

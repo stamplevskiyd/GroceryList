@@ -18,7 +18,14 @@ from grocery.db.models import Event
 from grocery.db.repositories.sessions import session_repo
 from grocery.db.session import override_session_factory, unit_of_work
 from grocery.domain.enums import EventType
-from grocery.schemas.events import EventPayload, EventRead
+from grocery.schemas.events import (
+    EventPayload,
+    EventRead,
+    ItemsAddedPayload,
+    ItemsPayload,
+    TagChangedPayload,
+    TagDeletedPayload,
+)
 from grocery.schemas.items import AddItems, ItemCreate, ItemRead
 from grocery.schemas.sources import AppSource
 from grocery.services import auth
@@ -154,7 +161,7 @@ async def test_sse_gets_committed_event_and_releases_subscription(
         frame = await stream.next_data()
         assert frame["type"] == "items_added"
         assert frame["payload"]["results"] == added.json()
-        assert frame["payload"]["items"] == []
+        assert "items" not in frame["payload"]
         assert frame["payload"]["results"][0]["item"]["name"] == "Лук"
         assert frame["payload"]["results"][0]["item"]["quantity"] == 2
         async with unit_of_work() as session:
@@ -245,14 +252,25 @@ def test_openapi_documents_typed_sse_and_cookie_security(app: FastAPI) -> None:
 @pytest.mark.parametrize("event_type", list(EventType))
 def test_all_event_variants_preserve_snapshot_json(event_type: EventType) -> None:
     from grocery.schemas.events import ShoppingListEventRead
+    from grocery.schemas.tags import TagRead
 
+    tag = TagRead(id=uuid7(), name="Recipe")
+    payload: EventPayload
+    if event_type == EventType.ITEMS_ADDED:
+        payload = ItemsAddedPayload(results=[])
+    elif event_type in (EventType.TAG_RENAMED, EventType.TAGS_MERGED):
+        payload = TagChangedPayload(tag=tag, previous_tag=tag)
+    elif event_type == EventType.TAG_DELETED:
+        payload = TagDeletedPayload(tag=tag)
+    else:
+        payload = ItemsPayload(items=[])
     snapshot = EventRead(
         id=uuid7(),
         shopping_list_id=uuid7(),
         user_id=uuid7(),
         type=event_type,
         source=AppSource(device_id="phone"),
-        payload=EventPayload(),
+        payload=payload,
         created_at=datetime.now(UTC),
     )
     result = ShoppingListEventRead.model_validate(snapshot.model_dump())

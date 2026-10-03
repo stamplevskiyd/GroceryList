@@ -6,7 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from grocery.domain.enums import AddStatus
-from grocery.schemas.events import EventPayload
+from grocery.schemas.events import ItemsAddedPayload, ItemsPayload
 from grocery.schemas.items import AddItemResult, ItemCreate, ItemRead, ItemUpdate, ParsedItem
 
 
@@ -41,7 +41,8 @@ def test_nested_quantity_serialization(item: ItemRead, quantity: Decimal | None)
     item.quantity = quantity
     parsed = ParsedItem(name=item.name, quantity=quantity, unit=item.unit)
     result = AddItemResult(status=AddStatus.CREATED, item=item)
-    payload = EventPayload(items=[item], results=[result])
+    payload = ItemsPayload(items=[item])
+    added_payload = ItemsAddedPayload(results=[result])
     assert item.quantity == quantity
     assert parsed.quantity == quantity
     assert item.model_dump()["quantity"] == quantity
@@ -52,7 +53,7 @@ def test_nested_quantity_serialization(item: ItemRead, quantity: Decimal | None)
     assert parsed.model_dump(mode="json")["quantity"] == expected
     assert result.model_dump(mode="json")["item"]["quantity"] == expected
     assert payload.model_dump(mode="json")["items"][0]["quantity"] == expected
-    assert payload.model_dump(mode="json")["results"][0]["item"]["quantity"] == expected
+    assert added_payload.model_dump(mode="json")["results"][0]["item"]["quantity"] == expected
 
 
 @pytest.mark.parametrize("schema", [ItemCreate, ItemUpdate])

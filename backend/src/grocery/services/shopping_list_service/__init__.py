@@ -20,7 +20,12 @@ from grocery.domain.errors import (
 )
 from grocery.domain.normalization import normalize_name, normalize_quantity
 from grocery.domain.quick_add import parse_quick_add
-from grocery.schemas.events import EventPayload
+from grocery.schemas.events import (
+    ItemsAddedPayload,
+    ItemsPayload,
+    TagChangedPayload,
+    TagDeletedPayload,
+)
 from grocery.schemas.items import (
     AddItemResult,
     AddItems,
@@ -30,10 +35,9 @@ from grocery.schemas.items import (
     ParsedItem,
     QuickAdd,
     QuickAddResult,
-    TagRead,
 )
 from grocery.schemas.sources import Source, item_source
-from grocery.schemas.tags import TagCreate, TagUpdate, TagUsageRead
+from grocery.schemas.tags import TagCreate, TagRead, TagUpdate, TagUsageRead
 from grocery.services.auth import get_current_user
 from grocery.services.events import record_event
 from grocery.services.shopping_list_service.merge import merge_item
@@ -102,12 +106,15 @@ async def _resolve_tags(shopping_list_id: UUID, names: Sequence[str]) -> list[Ta
     return tags
 
 
-async def get_items(shopping_list_id: UUID, *, include_bought: bool = False) -> list[ItemRead]:
+async def get_items(
+    shopping_list_id: UUID, *, include_bought: bool = False, tag: str | None = None
+) -> list[ItemRead]:
     await ensure_shopping_list_access(shopping_list_id)
+    normalized_tag = normalize_name(tag) if tag is not None else None
     return [
         ItemRead.model_validate(item)
         for item in await item_repo.for_shopping_list(
-            shopping_list_id, include_bought=include_bought
+            shopping_list_id, include_bought=include_bought, tag_normalized=normalized_tag
         )
     ]
 
@@ -131,12 +138,15 @@ async def add_items(data: AddItems, source: Source) -> list[AddItemResult]:
         else:
             await item_repo.update(match, merge_item(match, incoming, source))
             current_ids = {tag.id for tag in match.tags}
-            match.tags = [*match.tags, *(tag for tag in tags if tag.id not in current_ids)]
+            added_tags = [tag for tag in tags if tag.id not in current_ids]
+            if added_tags:
+                match.tags = [*match.tags, *added_tags]
+                match.updated_at = datetime.now(UTC)
             await get_current_session().flush()
             status = AddStatus.MERGED
         results.append(AddItemResult(status=status, item=ItemRead.model_validate(match)))
     await record_event(
-        data.shopping_list_id, EventType.ITEMS_ADDED, source, EventPayload(results=results)
+        data.shopping_list_id, EventType.ITEMS_ADDED, source, ItemsAddedPayload(results=results)
     )
     return results
 
@@ -159,19 +169,28 @@ async def quick_add(data: QuickAdd, source: Source) -> QuickAddResult:
     )
 
 
-async def update_item(id: UUID, data: ItemUpdate, source: Source) -> ItemRead:
+async def update_item(
+    id: UUID, data: ItemUpdate, source: Source, *, shopping_list_id: UUID | None = None
+) -> ItemRead:
+    if shopping_list_id is not None:
+        await ensure_shopping_list_access(shopping_list_id)
     item = await _item_for_update(id)
+    if shopping_list_id is not None and item.shopping_list_id != shopping_list_id:
+        raise ItemNotFoundError()
     if "unit" in data.model_fields_set:
         quantity = data.quantity if "quantity" in data.model_fields_set else item.quantity
         quantity, unit = normalize_quantity(quantity, data.unit)
         data = data.model_copy(update={"quantity": quantity, "unit": unit})
     await item_repo.update(item, data)
     if "tags" in data.model_fields_set:
-        item.tags = await _resolve_tags(item.shopping_list_id, data.tags or [])
+        tags = await _resolve_tags(item.shopping_list_id, data.tags or [])
+        if {tag.id for tag in item.tags} != {tag.id for tag in tags}:
+            item.tags = tags
+            item.updated_at = datetime.now(UTC)
         await get_current_session().flush()
     result = ItemRead.model_validate(item)
     await record_event(
-        item.shopping_list_id, EventType.ITEM_UPDATED, source, EventPayload(items=[result])
+        item.shopping_list_id, EventType.ITEM_UPDATED, source, ItemsPayload(items=[result])
     )
     return result
 
@@ -208,7 +227,7 @@ async def _set_bought(
         shopping_list_id,
         EventType.ITEMS_BOUGHT if bought else EventType.ITEMS_UNBOUGHT,
         source,
-        EventPayload(items=result),
+        ItemsPayload(items=result),
     )
     return result
 
@@ -221,7 +240,7 @@ async def _delete_items(
 ) -> int:
     snapshots = [ItemRead.model_validate(item) for item in items]
     await item_repo.delete_by_ids([item.id for item in items])
-    await record_event(shopping_list_id, type, source, EventPayload(items=snapshots))
+    await record_event(shopping_list_id, type, source, ItemsPayload(items=snapshots))
     return len(items)
 
 
@@ -238,12 +257,9 @@ async def remove_items(
     if ids is not None:
         items = await _selected_items(shopping_list_id, ids)
     else:
-        normalized = normalize_name(tag or "")
-        items = [
-            item
-            for item in await item_repo.for_shopping_list(shopping_list_id, include_bought=True)
-            if any(t.name_normalized == normalized for t in item.tags)
-        ]
+        items = await item_repo.for_shopping_list(
+            shopping_list_id, include_bought=True, tag_normalized=normalize_name(tag or "")
+        )
     return await _delete_items(shopping_list_id, items, source)
 
 
@@ -254,11 +270,7 @@ async def delete_item(id: UUID, source: Source) -> None:
 
 async def clear_bought(shopping_list_id: UUID, source: Source) -> int:
     await ensure_shopping_list_access(shopping_list_id, lock=True)
-    items = [
-        item
-        for item in await item_repo.for_shopping_list(shopping_list_id, include_bought=True)
-        if item.is_bought
-    ]
+    items = await item_repo.for_shopping_list(shopping_list_id, bought_only=True)
     return await _delete_items(shopping_list_id, items, source, EventType.BOUGHT_CLEARED)
 
 
@@ -279,10 +291,12 @@ async def rename_tag(id: UUID, name: str, source: Source) -> TagRead:
     previous = TagRead.model_validate(tag)
     existing = await tag_repo.by_name(tag.shopping_list_id, data.name_normalized)
     if existing is not None and existing.id != tag.id:
-        for item in await item_repo.for_shopping_list(tag.shopping_list_id, include_bought=True):
-            if any(t.id == tag.id for t in item.tags):
-                remaining = [t for t in item.tags if t.id != tag.id]
-                item.tags = remaining if existing in remaining else [*remaining, existing]
+        for item in await item_repo.for_shopping_list(
+            tag.shopping_list_id, include_bought=True, tag_id=tag.id
+        ):
+            remaining = [t for t in item.tags if t.id != tag.id]
+            item.tags = remaining if existing in remaining else [*remaining, existing]
+            item.updated_at = datetime.now(UTC)
         await get_current_session().flush()
         await tag_repo.delete(tag)
         result = TagRead.model_validate(existing)
@@ -292,7 +306,7 @@ async def rename_tag(id: UUID, name: str, source: Source) -> TagRead:
         result = TagRead.model_validate(tag)
         type = EventType.TAG_RENAMED
     await record_event(
-        tag.shopping_list_id, type, source, EventPayload(tag=result, previous_tag=previous)
+        tag.shopping_list_id, type, source, TagChangedPayload(tag=result, previous_tag=previous)
     )
     return result
 
@@ -300,22 +314,17 @@ async def rename_tag(id: UUID, name: str, source: Source) -> TagRead:
 async def delete_tag(id: UUID, source: Source) -> None:
     tag = await _tag_for_update(id)
     snapshot = TagRead.model_validate(tag)
-    for item in await item_repo.for_shopping_list(tag.shopping_list_id, include_bought=True):
-        item.tags = [t for t in item.tags if t.id != tag.id]
-    await get_current_session().flush()
     await tag_repo.delete(tag)
     await record_event(
-        tag.shopping_list_id, EventType.TAG_DELETED, source, EventPayload(tag=snapshot)
+        tag.shopping_list_id, EventType.TAG_DELETED, source, TagDeletedPayload(tag=snapshot)
     )
 
 
 async def bulk_tag(id: UUID, action: Literal["mark_bought", "delete_items"], source: Source) -> int:
     tag = await _tag_for_update(id)
-    items = [
-        item
-        for item in await item_repo.for_shopping_list(tag.shopping_list_id, include_bought=True)
-        if any(t.id == tag.id for t in item.tags)
-    ]
+    items = await item_repo.for_shopping_list(
+        tag.shopping_list_id, include_bought=True, tag_id=tag.id
+    )
     if action == "mark_bought":
         await _set_bought(tag.shopping_list_id, items, True, source)
         return len(items)

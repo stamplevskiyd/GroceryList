@@ -4,15 +4,40 @@
 """
 
 from functools import lru_cache
+from typing import Literal
 
-from pydantic import BaseModel, Field, HttpUrl, PostgresDsn
+from pydantic import BaseModel, Field, HttpUrl, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class AppSettings(BaseModel):
     public_url: HttpUrl
+
+    @field_validator("public_url")
+    @classmethod
+    def origin_only(cls, value: HttpUrl) -> HttpUrl:
+        if (
+            value.path not in (None, "/")
+            or value.query
+            or value.fragment
+            or value.username
+            or value.password
+        ):
+            raise ValueError(
+                "APP_PUBLIC_URL должен быть origin без path, query, fragment и credentials"
+            )
+        return value
+
+    @property
+    def origin(self) -> str:
+        return str(self.public_url).rstrip("/")
+
+    @property
+    def mcp_url(self) -> str:
+        return self.origin + "/mcp"
+
     version: str = "dev"
-    log_level: str = "INFO"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
 
 class DbSettings(BaseModel):

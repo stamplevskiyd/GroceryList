@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.13",
     "pydantic-settings>=2.15",
     "argon2-cffi>=25.1",
+    "mcp>=2.2,<3",
 ]
 
 [dependency-groups]
@@ -125,4 +126,24 @@ name = "SQLAlchemy — только в данных и сервисах"
 type = "forbidden"
 source_modules = ["grocery.api", "grocery.mcp_server", "grocery.schemas", "grocery.domain"]
 forbidden_modules = ["sqlalchemy"]
+allow_indirect_imports = true
+
+
+[[tool.importlinter.contracts]]
+name = "Auth не зависит от списка и событий"
+type = "forbidden"
+source_modules = ["grocery.services.auth"]
+forbidden_modules = ["grocery.services.shopping_list_service", "grocery.services.events", "grocery.services.event_hub"]
+
+[[tool.importlinter.contracts]]
+name = "События не зависят от бизнес-логики списка"
+type = "forbidden"
+source_modules = ["grocery.services.events", "grocery.services.event_hub"]
+forbidden_modules = ["grocery.services.shopping_list_service"]
+
+[[tool.importlinter.contracts]]
+name = "Адаптеры не записывают события напрямую"
+type = "forbidden"
+source_modules = ["grocery.api", "grocery.mcp_server"]
+forbidden_modules = ["grocery.services.events"]
 allow_indirect_imports = true

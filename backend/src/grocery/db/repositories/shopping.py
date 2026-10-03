@@ -1,11 +1,12 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import ClassVar
 from uuid import UUID
 
 from pydantic import BaseModel
-from sqlalchemy import func, select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import func, inspect, select, update
+from sqlalchemy.orm import LoaderCallableStatus, selectinload
 
 from grocery.db.models import Event, Item, ShoppingList, ShoppingListMember, Tag
 from grocery.db.repositories.base import Repository
@@ -64,10 +65,24 @@ class ItemRepository(Repository[Item, ItemCreate, ItemUpdate]):
             )
         )
 
-    async def for_shopping_list(self, id: UUID, *, include_bought: bool = False) -> list[Item]:
+    async def for_shopping_list(
+        self,
+        id: UUID,
+        *,
+        include_bought: bool = False,
+        bought_only: bool = False,
+        tag_id: UUID | None = None,
+        tag_normalized: str | None = None,
+    ) -> list[Item]:
         statement = select(Item).where(Item.shopping_list_id == id).options(selectinload(Item.tags))
-        if not include_bought:
+        if bought_only:
+            statement = statement.where(Item.is_bought.is_(True))
+        elif not include_bought:
             statement = statement.where(Item.is_bought.is_(False))
+        if tag_id is not None:
+            statement = statement.where(Item.tags.any(Tag.id == tag_id))
+        if tag_normalized is not None:
+            statement = statement.where(Item.tags.any(Tag.name_normalized == tag_normalized))
         statement = statement.order_by(
             Item.is_bought,
             Item.bought_at.desc().nulls_last(),
@@ -100,6 +115,24 @@ class TagUsage:
 
 
 class TagRepository(Repository[Tag, TagCreate, TagUpdate]):
+    async def delete(self, obj: Tag) -> None:
+        session = get_current_session()
+        # Cascade removes links in Postgres. Refresh only affected Item objects
+        # already present in this UoW, so their loaded collections do not stay stale.
+        loaded_ids = [
+            item.id
+            for item in list(session.identity_map.values())
+            if isinstance(item, Item)
+            and inspect(item).attrs.tags.loaded_value is not LoaderCallableStatus.NO_VALUE
+            and any(tag.id == obj.id for tag in item.tags)
+        ]
+        await session.execute(
+            update(Item).where(Item.tags.any(Tag.id == obj.id)).values(updated_at=datetime.now(UTC))
+        )
+        await super().delete(obj)
+        if loaded_ids:
+            await item_repo.get_by_ids(loaded_ids)
+
     async def by_name(self, shopping_list_id: UUID, name_normalized: str) -> Tag | None:
         return await get_current_session().scalar(
             select(Tag).where(

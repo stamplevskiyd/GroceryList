@@ -1,9 +1,7 @@
 from datetime import datetime
-from typing import Annotated
 from uuid import UUID
 
 from pydantic import (
-    AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
@@ -13,11 +11,10 @@ from pydantic import (
 )
 
 from grocery.domain.enums import AddStatus
-from grocery.domain.normalization import clean_name, normalize_name, normalize_quantity
-from grocery.schemas.common import PositiveQuantity, Quantity
+from grocery.domain.normalization import normalize_name, normalize_quantity
+from grocery.schemas.common import Name, PositiveQuantity, Quantity, Unit
 from grocery.schemas.sources import ItemSource
-
-Name = Annotated[str, AfterValidator(clean_name), Field(min_length=1, max_length=255)]
+from grocery.schemas.tags import TagRead
 
 
 class ItemCreate(BaseModel):
@@ -25,7 +22,7 @@ class ItemCreate(BaseModel):
 
     name: Name
     quantity: PositiveQuantity | None = None
-    unit: str | None = Field(default=None, max_length=64)
+    unit: Unit | None = None
     tags: list[Name] = Field(default_factory=list)
     note: str | None = None
 
@@ -45,7 +42,7 @@ class ItemUpdate(BaseModel):
 
     name: Name | None = None
     quantity: PositiveQuantity | None = None
-    unit: str | None = Field(default=None, max_length=64)
+    unit: Unit | None = None
     tags: list[Name] | None = None
     note: str | None = None
 
@@ -67,12 +64,6 @@ class ItemUpdate(BaseModel):
     @property
     def name_normalized(self) -> str | None:
         return None if self.name is None else normalize_name(self.name)
-
-
-class TagRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: UUID
-    name: str
 
 
 class ItemRead(BaseModel):

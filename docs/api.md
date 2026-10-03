@@ -26,3 +26,36 @@ GET `/api/events?shopping_list_id=<UUID>` открывает SSE-поток с �
 до выполнения dependency аутентификации, поэтому такой запрос возвращает 422
 `invalid_request`, даже без cookie или заголовка устройства. Входные данные в ошибку
 не включаются. Регрессионные тесты фиксируют этот порядок для всех item/tag маршрутов с телом.
+
+## Персональные токены
+
+- `GET /api/tokens` — метаданные своих PAT, включая отозванные: id, name, created_at,
+  last_used_at, revoked_at. Сортировка по created_at/id.
+- `POST /api/tokens` — `{name}` (после trim 1–255 символов); ответ 200 содержит метаданные
+  и `token`. Это единственный ответ, в котором можно получить исходный секрет.
+- `DELETE /api/tokens/{id}` — отзыв, 204. Повторный отзыв своего токена успешен;
+  чужой и отсутствующий UUID дают одинаковый 404.
+
+Мутации требуют cookie и X-Device-Id; успешные ответы имеют Cache-Control: no-store.
+PAT `gl_pat_…` предназначен для MCP и не авторизует REST. Хранится только SHA-256.
+Последнее использование фиксируется при успешной верификации Bearer, даже если инструмент
+затем вернул ошибку. Отзыв запрещает новые HTTP-запросы; начатый вызов может завершиться.
+
+## MCP
+
+Streamable HTTP `/mcp` принимает `Authorization: Bearer <PAT>`, без cookie.
+Доступны `get_shopping_list`, `list_tags`, `add_items`, `update_item`, `set_bought`,
+`remove_items`. `shopping_list_id` необязателен при единственном доступном списке;
+с несколькими списками передайте UUID явно. Теги фильтруются по нормализованному точному имени.
+PATCH различает пропуск и null; tags=[] очищает теги. Источник берётся из PAT, не из аргументов.
+
+Открытые metadata: `/.well-known/oauth-protected-resource/mcp` и корневой alias
+`/.well-known/oauth-protected-resource`. Ответ 401 указывает рабочий resource_metadata.
+OAuth AS появится на этапе 6; сейчас OAuth access/refresh tokens отклоняются.
+`APP_PUBLIC_URL` задаёт origin без path/query/fragment/credentials; от него строится
+канонный resource `/mcp`, Host/Origin allowlist и CORS. MCP не перенаправляет `/mcp` на `/mcp/`.
+
+Payload SSE соответствует type: items_added содержит обязательные results;
+операции позиций — items; tag_renamed/tags_merged — tag и previous_tag;
+tag_deleted — tag. Неиспользуемые поля не передаются. Миграция 0005 переводит
+существующие снимки в этот формат с сохранением полезных данных.

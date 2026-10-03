@@ -6,6 +6,7 @@ from uuid import UUID
 import httpx
 import pytest
 from fastapi import FastAPI
+from starlette.routing import Mount
 
 from grocery.db.session import unit_of_work
 from grocery.main import create_app
@@ -36,7 +37,11 @@ async def registered_user() -> None:
 
 @pytest.fixture
 def app() -> FastAPI:
-    return create_app()
+    app = create_app()
+    # Probe routes are added after construction in API-only tests. The catch-all
+    # MCP mount would hide them; full REST+MCP integration uses tests/mcp fixtures.
+    app.router.routes[:] = [route for route in app.routes if not isinstance(route, Mount)]
+    return app
 
 
 @pytest.fixture

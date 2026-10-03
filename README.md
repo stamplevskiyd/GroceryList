@@ -39,8 +39,8 @@ uv run python -m grocery create-user anna
 
 Реализован домен списка: нормализация и быстрый ввод, объединение позиций, теги, купленное,
 история событий и публикация после коммита во внутренний SSE-хаб. Доступны cookie-вход
-и [REST API позиций и тегов с SSE-обновлениями](docs/api.md). PWA и подключение ассистентов
-идут последующими этапами плана.
+и [REST API позиций и тегов с SSE-обновлениями](docs/api.md). MCP `/mcp` принимает персональные токены (PAT); управление токенами — через REST API.
+PWA, OAuth и production-деплой идут последующими этапами плана.
 
 Cookie-сессии всегда `Secure`, `HttpOnly`, `SameSite=Lax`. Для ручного входа и запросов
 с cookie используйте HTTPS base URL (тестовый хост либо локальный HTTPS-прокси),
@@ -62,6 +62,24 @@ APP_PUBLIC_URL=http://localhost \
 с новой генерацией во временной директории и не перезаписывает сохранённые файлы.
 Сейчас frontend содержит только инструменты контракта; React/PWA добавятся на этапе 7.
 
+## MCP и PAT
+
+После миграций и входа по cookie выдайте PAT через `POST /api/tokens` с телом
+`{"name":"Claude Code"}` и заголовком `X-Device-Id`. Сохраните поле `token` из ответа:
+оно показывается только при выдаче. `GET /api/tokens` возвращает метаданные,
+`DELETE /api/tokens/{id}` отзывает токен.
+
+MCP-клиент подключается к `<APP_PUBLIC_URL>/mcp`, передавая
+`Authorization: Bearer <PAT>`. Шесть инструментов используют тот же сервис списка,
+что REST; ошибки откатывают изменения, коммит публикует события в SSE.
+`APP_PUBLIC_URL` должен быть origin (например, `https://grocery.example`) без пути.
+OAuth-подключение claude.ai/ChatGPT появится на этапе 6. Реальные клиенты и Cloudflare
+проверяются при деплое; локальные проверки не требуют входа в аккаунты владельца.
+
+`APP_LOG_LEVEL` принимает DEBUG, INFO, WARNING, ERROR или CRITICAL и применяется
+при старте к приложению и MCP. После обновления выполните `alembic upgrade head`:
+миграция 0005 обновляет формат ранее сохранённых payload событий.
+
 ## Проверки
 
 Все команды — в `scripts/`, Makefile их только вызывает (ADR-0007):
@@ -69,7 +87,7 @@ APP_PUBLIC_URL=http://localhost \
 | Команда | Что делает |
 |---|---|
 | `make fmt` | форматирование и автоисправления ruff |
-| `make lint` | ruff, границы слоёв (import-linter), shellcheck |
+| `make lint` | ruff, границы слоёв и сервисов (import-linter), запрет commit/rollback вне UoW, shellcheck |
 | `make typecheck` | mypy strict и TypeScript strict |
 | `make api` / `scripts/api.sh --check` | генерация / проверка актуальности OpenAPI и TS |
 | `make test` / `scripts/test.sh unit` | все тесты / только быстрые, без Docker |

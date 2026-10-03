@@ -38,6 +38,9 @@ OPERATIONS = [
     ("/api/tags/{id}", "delete", None, True),
     ("/api/tags/{id}/bulk", "post", "CountRead", True),
     ("/api/events", "get", "ShoppingListEventRead", True),
+    ("/api/tokens", "get", "TokenRead", True),
+    ("/api/tokens", "post", "TokenIssued", True),
+    ("/api/tokens/{id}", "delete", None, True),
 ]
 
 

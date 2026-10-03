@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, computed_field
 
 from grocery.domain.normalization import normalize_name
-from grocery.schemas.items import Name, TagRead
+from grocery.schemas.common import Name
 
 
 class TagName(BaseModel):
@@ -27,6 +27,12 @@ class TagUpdate(TagName):
 class TagBulk(BaseModel):
     model_config = ConfigDict(extra="forbid")
     action: Literal["mark_bought", "delete_items"]
+
+
+class TagRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    name: str
 
 
 class TagUsageRead(TagRead):

@@ -7,8 +7,7 @@ from fastapi import APIRouter, Response
 from grocery.api.deps import AppSourceDep, Authenticated
 from grocery.api.errors import PROTECTED_RESPONSES
 from grocery.schemas.common import CountRead
-from grocery.schemas.items import TagRead
-from grocery.schemas.tags import TagBulk, TagUpdate, TagUsageRead
+from grocery.schemas.tags import TagBulk, TagRead, TagUpdate, TagUsageRead
 from grocery.services import shopping_list_service as service
 
 router = APIRouter(

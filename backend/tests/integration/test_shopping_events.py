@@ -7,7 +7,7 @@ from sqlalchemy import select
 from grocery.db.models import Event, ShoppingList, ShoppingListMember
 from grocery.db.session import unit_of_work
 from grocery.domain.enums import EventType, MemberRole
-from grocery.schemas.events import EventPayload
+from grocery.schemas.events import ItemsAddedPayload
 from grocery.schemas.sources import AppSource
 from grocery.services.auth import AuthError, acting_as, create_user, get_current_user
 from grocery.services.event_hub import event_hub
@@ -47,7 +47,7 @@ async def test_event_published_after_commit_only() -> None:
                     shopping_list.id,
                     EventType.ITEMS_ADDED,
                     AppSource(device_id="phone"),
-                    EventPayload(),
+                    ItemsAddedPayload(results=[]),
                 )
                 assert queue.empty()
         published = queue.get_nowait()
@@ -57,7 +57,7 @@ async def test_event_published_after_commit_only() -> None:
         async with unit_of_work() as session:
             persisted = await session.get(Event, stored.id)
             assert persisted is not None
-            assert persisted.payload == EventPayload()
+            assert persisted.payload == ItemsAddedPayload(results=[])
 
 
 @pytest.mark.real_commits
@@ -73,7 +73,7 @@ async def test_rollback_never_publishes() -> None:
                     shopping_list.id,
                     EventType.ITEMS_ADDED,
                     AppSource(device_id="phone"),
-                    EventPayload(),
+                    ItemsAddedPayload(results=[]),
                 )
                 raise ValueError("abort")
         assert queue.empty()

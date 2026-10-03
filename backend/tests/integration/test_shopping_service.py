@@ -9,6 +9,7 @@ from grocery.db.models import Event, Item, User
 from grocery.db.session import unit_of_work
 from grocery.domain.enums import AddStatus, EventType
 from grocery.domain.errors import ItemNotFoundError, NotFoundError
+from grocery.schemas.events import ItemsPayload
 from grocery.schemas.items import AddItems, ItemCreate, ItemUpdate, QuickAdd
 from grocery.schemas.sources import AppSource, McpSource
 from grocery.services import shopping_list_service as service
@@ -141,6 +142,7 @@ async def test_set_bought_idempotent_and_clear_preserves_history(shopping_list_i
         assert [item.id for item in await service.get_items(shopping_list_id)] == [second.item.id]
         event = await session.scalar(select(Event).where(Event.type == EventType.BOUGHT_CLEARED))
         assert event is not None
+        assert isinstance(event.payload, ItemsPayload)
         assert event.payload.items[0].name == "Лук"
         assert event.payload.items[0].bought_at == timestamp
 

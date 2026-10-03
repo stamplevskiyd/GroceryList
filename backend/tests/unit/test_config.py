@@ -99,3 +99,26 @@ def test_env_example_lists_every_setting() -> None:
     declared = {line.split("=", 1)[0] for line in lines if "=" in line and not line.startswith("#")}
 
     assert set(_env_names()) <= declared
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://grocery.example/path",
+        "https://grocery.example/?q=x",
+        "https://grocery.example/#x",
+        "https://user:secret@grocery.example",
+    ],
+)
+def test_public_url_must_be_origin(monkeypatch: pytest.MonkeyPatch, url: str) -> None:
+    monkeypatch.setenv("APP_PUBLIC_URL", url)
+    with pytest.raises(ValidationError):
+        Settings()
+
+
+@pytest.mark.parametrize(
+    "url", ["https://grocery.example", "https://grocery.example/", "http://127.0.0.1:8765/"]
+)
+def test_mcp_url_canonical(monkeypatch: pytest.MonkeyPatch, url: str) -> None:
+    monkeypatch.setenv("APP_PUBLIC_URL", url)
+    assert Settings().app.mcp_url == url.rstrip("/") + "/mcp"

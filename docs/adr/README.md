@@ -21,3 +21,5 @@
 | [0013](0013-orm-model-conventions.md) | Соглашения ORM-моделей и миграций (enum без нативного типа) | принято |
 | [0014](0014-repository-structure.md) | Структура репозитория и пакетов | принято |
 | [0015](0015-ci-cd.md) | CI/CD: GitHub Actions, образы на Docker Hub, деплой кнопкой и по тегам | принято |
+| [0016](0016-mcp-call-transaction-boundary.md) | Общий перевод ошибок MCP и rollback при сериализованном isError | принято |
+| [0017](0017-shared-patch-and-event-payloads.md) | Общий плоский MCP PATCH и обязательные payload по типу события | принято |

@@ -94,3 +94,54 @@ OAuth-подключение claude.ai/ChatGPT появится на этапе 
 | `make check` | всё вместе; код готов, когда она зелёная |
 
 Интеграционные тесты сами поднимают Postgres в Docker (testcontainers).
+
+## Контейнер backend и бэкапы (этап 5)
+
+Первый автономный блок деплоя готов; Caddy, CI/CD и production-приёмка остаются
+в [плане этапа 5](docs/superpowers/plans/2026-10-03-05-deploy-and-cd.md).
+После создания `.env` из `.env.example`:
+
+```bash
+docker compose --profile runtime up -d --build
+curl localhost:8000/api/health
+docker compose exec backend python -m grocery create-user anna
+```
+
+Backend перед запуском применяет Alembic-миграции; ошибка миграции завершает контейнер.
+`APP_VERSION` зашивается при сборке из `IMAGE_TAG`. В `.env` для запуска Python на хосте
+используется `DB_URL`, внутри контейнера — `CONTAINER_DB_URL`. Если меняете реквизиты
+Postgres, обновите оба URL; пароль в URL должен быть URL-encoded. Порт backend доступен
+только на localhost. HTTPS-прокси для входа с Secure cookie добавляется следующим блоком.
+
+Backup сохраняет custom-format архивы в volume `postgres-backups` каждые
+`BACKUP_INTERVAL_SECONDS` (по умолчанию сутки), оставляя `BACKUP_KEEP` последних копий.
+Незавершённый dump не публикуется и не запускает удаление старых копий. Копия вручную:
+
+```bash
+docker compose --profile runtime run --rm backup manual
+```
+
+Восстановление проверяйте в отдельную пустую БД, подставив имя архива, выведенное backup:
+
+```bash
+docker compose exec postgres sh -c 'createdb -U "$POSTGRES_USER" grocery_restored'
+docker compose --profile runtime run --rm --entrypoint pg_restore backup \
+  --exit-on-error --single-transaction --no-owner --no-acl \
+  --dbname=grocery_restored /backups/ИМЯ_АРХИВА.dump
+```
+
+Для переключения приложения на восстановленную БД измените `CONTAINER_DB_URL` и
+пересоздайте backend. Volume на VPS не защищает от потери самого VPS: перед эксплуатацией
+нужно настроить копирование архивов за его пределы. После аварийного завершения backup
+может остаться `/backups/.backup-lock`: удаляйте его только убедившись, что dump не выполняется.
+
+Воспроизводимая проверка образа и backup/restore в изолированных Docker-ресурсах:
+
+```bash
+docker build -f backend.Dockerfile --build-arg APP_VERSION=stage5-check \
+  -t grocerylist-backend:stage5-check .
+scripts/check_runtime.sh grocerylist-backend:stage5-check
+```
+
+Smoke проверяет миграции, health/version, retention, ошибку dump и восстановление данных.
+При выходе удаляет только созданные им контейнеры, сеть и backup-volume.

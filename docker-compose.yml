@@ -1,6 +1,49 @@
-# Локальная разработка: пока только Postgres. Сервисы caddy, backend и backup
-# добавляются в плане деплоя (ADR-0015).
+# Postgres для разработки; профиль runtime включает backend и ежедневные бэкапы.
+# Caddy и CI/CD добавляются следующими задачами этапа 5 (ADR-0015).
 services:
+  backend:
+    profiles: [runtime]
+    image: ${DOCKERHUB_USER:-stamplevskiyd}/grocerylist-backend:${IMAGE_TAG:-dev}
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+      args:
+        APP_VERSION: ${IMAGE_TAG:-dev}
+    env_file: .env
+    environment:
+      DB_URL: ${CONTAINER_DB_URL:-postgresql+asyncpg://grocery:grocery@postgres:5432/grocery}
+      APP_VERSION: ${IMAGE_TAG:-dev}
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+  backup:
+    profiles: [runtime]
+    image: postgres:18-alpine
+    entrypoint: [/bin/sh, /scripts/pg_backup.sh]
+    command: [--loop]
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-grocery}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-grocery}
+      PGDATABASE: ${POSTGRES_DB:-grocery}
+      BACKUP_KEEP: ${BACKUP_KEEP:-7}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+    volumes:
+      - ./scripts/pg_backup.sh:/scripts/pg_backup.sh:ro
+      - postgres-backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
   postgres:
     image: postgres:18-alpine
     environment:
@@ -22,3 +65,4 @@ services:
 
 volumes:
   postgres-data:
+  postgres-backups:

@@ -10,4 +10,4 @@ def test_compose_postgres_image_matches_tests() -> None:
 
     images = re.findall(r"^\s*image:\s*(postgres:\S+)\s*$", compose, flags=re.MULTILINE)
 
-    assert images == [POSTGRES_IMAGE]
+    assert images == [POSTGRES_IMAGE, POSTGRES_IMAGE]

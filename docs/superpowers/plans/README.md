@@ -13,7 +13,7 @@
 | 2 | [Домен списка покупок](2026-09-30-02-shopping-domain.md) | Модели списков, позиций, тегов, событий; нормализация, разбор строки, объединение; `shopping_list_service`, теги, запись событий и SSE-хаб; `create-user` | выполнен |
 | 3 | [REST API и вход в PWA](2026-09-30-03-rest-api-and-sessions.md) | Cookie-сессии, логин с ограничением попыток, эндпоинты позиций и тегов, SSE, ошибки, экспорт OpenAPI | выполнен |
 | 4 | [MCP-сервер и PAT](2026-10-01-04-mcp-and-pat.md) | `MCPServer` как resource server, верификатор PAT, middleware, инструменты, инструкции | выполнен |
-| 5 | Деплой и CD | Dockerfile'ы, полный `docker-compose.yml`, Caddy, `images.yml`, `deploy.yml`, первый деплой: проверка Cloudflare, подключение Claude Code по PAT | — |
+| 5 | [Деплой и CD](2026-10-03-05-deploy-and-cd.md) | Dockerfile'ы, полный `docker-compose.yml`, Caddy, `images.yml`, `deploy.yml`, первый деплой: проверка Cloudflare, подключение Claude Code по PAT | в работе |
 | 6 | OAuth Authorization Server | Метаданные, CIMD и DCR, authorize и API согласия, token с ротацией, revoke, подключённые приложения | — |
 | 7 | PWA | Каркас Vite + PWA, клиент API, экраны по макету, живые обновления, экран согласия OAuth | — |
 | 8 | Push-уведомления | Подписки, outbox, воркер, VAPID, обработка push в service worker; приёмочный сценарий спеки §1 | — |

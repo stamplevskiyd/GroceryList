@@ -171,6 +171,7 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
   const [listId, setListId] = useState(me.shopping_lists[0]?.id ?? "");
   const [draft, setDraft] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [view, setView] = useState<"list" | "tags">("list");
   const [notice, setNotice] = useState("");
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState("");
@@ -249,6 +250,20 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
   const pending = visible.filter((item) => !item.is_bought);
   const completed = visible.filter((item) => item.is_bought);
   const totalCompleted = items.filter((item) => item.is_bought).length;
+  const groups = tags
+    .filter((tag) => !selectedTags.length || selectedTags.includes(tag.name))
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+    .map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      items: pending.filter((item) =>
+        item.tags.some((itemTag) => itemTag.id === tag.id),
+      ),
+    }))
+    .filter((group) => group.items.length);
+  const untagged = pending.filter((item) => !item.tags.length);
+  if (untagged.length)
+    groups.push({ id: "untagged", name: "Без тега", items: untagged });
 
   function row(item: Item) {
     const quantity = [
@@ -400,6 +415,22 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
           {connected ? "Обновляется вживую" : "Соединяемся…"}
         </span>
       </div>
+      <div className="app-view-switch" role="group" aria-label="Вид списка">
+        <button
+          type="button"
+          aria-pressed={view === "list"}
+          onClick={() => setView("list")}
+        >
+          Списком
+        </button>
+        <button
+          type="button"
+          aria-pressed={view === "tags"}
+          onClick={() => setView("tags")}
+        >
+          По тегам
+        </button>
+      </div>
       {!!(tags.length || selectedTags.length) && (
         <nav className="app-filters" aria-label="Фильтр по тегам">
           <button
@@ -445,9 +476,25 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
       ) : (
         !itemsQuery.isError && (
           <>
-            {!!pending.length && (
+            {!!pending.length && view === "list" && (
               <ul className="app-items">{pending.map(row)}</ul>
             )}
+            {view === "tags" &&
+              groups.map((group) => (
+                <section
+                  key={group.id}
+                  className="app-item-group"
+                  aria-labelledby={`tag-group-${group.id}`}
+                >
+                  <div className="app-group-heading">
+                    <h2 id={`tag-group-${group.id}`}>{group.name}</h2>
+                    <span aria-label={`${group.items.length} к покупке`}>
+                      {group.items.length}
+                    </span>
+                  </div>
+                  <ul className="app-items">{group.items.map(row)}</ul>
+                </section>
+              ))}
             {!pending.length && (
               <div className="app-empty">
                 <span aria-hidden="true">✓</span>

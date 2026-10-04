@@ -166,6 +166,48 @@
   overflow-x: auto;
   padding: 4px 3px 12px;
 }
+.app-view-switch {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px;
+  margin: 0 0 16px;
+  gap: 4px;
+  border-radius: 16px;
+  background: var(--surface-2);
+}
+#app-root .app-view-switch button {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+#app-root .app-view-switch button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 4px var(--line);
+}
+.app-item-group {
+  padding: 0;
+  margin: 0 0 28px;
+  max-width: none;
+}
+.app-group-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 0 4px;
+}
+#app-root .app-group-heading h2 {
+  margin: 0;
+  font-size: 21px;
+  overflow-wrap: anywhere;
+}
+.app-group-heading > span {
+  color: var(--ink-3);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
 #app-root .app-filters button {
   border-radius: 24px;
   white-space: nowrap;

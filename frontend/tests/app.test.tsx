@@ -56,8 +56,11 @@ let failAdd: boolean;
 let duplicateUser: boolean;
 let failPatch: boolean;
 let client: QueryClient;
-const writes: Array<{ path: string; body: unknown; device: string | null }> =
-  [];
+const writes: Array<{
+  path: string;
+  body: unknown;
+  device: string | null;
+}> = [];
 
 beforeEach(() => {
   vi.stubGlobal("EventSource", Stream);
@@ -128,7 +131,11 @@ beforeEach(() => {
     if (request.method === "PATCH" && path.startsWith("/api/items/")) {
       const body =
         (await request.json()) as components["schemas"]["ItemUpdate"];
-      writes.push({ path, body, device: request.headers.get("X-Device-Id") });
+      writes.push({
+        path,
+        body,
+        device: request.headers.get("X-Device-Id"),
+      });
       if (failPatch)
         return json(
           {
@@ -152,7 +159,10 @@ beforeEach(() => {
               unit: "unit" in body ? (body.unit ?? null) : item.unit,
               note: "note" in body ? (body.note ?? null) : item.note,
               tags: body.tags
-                ? body.tags.map((name, index) => ({ id: `tag-${index}`, name }))
+                ? body.tags.map((name, index) => ({
+                    id: `tag-${index}`,
+                    name,
+                  }))
                 : item.tags,
               updated_at: "2026-10-04T01:00:00Z",
             }
@@ -173,11 +183,18 @@ beforeEach(() => {
       const body = request.headers.get("content-type")?.includes("json")
         ? await request.json()
         : null;
-      writes.push({ path, body, device: request.headers.get("X-Device-Id") });
+      writes.push({
+        path,
+        body,
+        device: request.headers.get("X-Device-Id"),
+      });
       if (path === "/api/items/quick-add") {
         if (failAdd)
           return json(
-            { code: "invalid_request", message: "Покупку не удалось добавить" },
+            {
+              code: "invalid_request",
+              message: "Покупку не удалось добавить",
+            },
             422,
           );
         items = [structuredClone(milk)];
@@ -187,7 +204,11 @@ beforeEach(() => {
         });
       }
       if (path === "/api/items/bought") {
-        items = items.map((item) => ({ ...item, is_bought: body.bought }));
+        items = items.map((item) =>
+          body.ids.includes(item.id)
+            ? { ...item, is_bought: body.bought }
+            : item,
+        );
         return json(items);
       }
       if (path === "/api/auth/logout") {
@@ -507,4 +528,165 @@ test("remote deletion disables saving without discarding the visible draft", asy
   expect((card.getByLabelText("Заметка") as HTMLTextAreaElement).value).toBe(
     "Черновик",
   );
+});
+
+const breakfast = { id: "breakfast", name: "Завтрак" };
+const dairy = { id: "dairy", name: "Молочное" };
+async function openGroupedList() {
+  loggedIn = true;
+  items = [
+    { ...structuredClone(milk), tags: [breakfast, dairy] },
+    {
+      ...structuredClone(milk),
+      id: "bread",
+      name: "Хлеб",
+      tags: [breakfast],
+    },
+    { ...structuredClone(milk), id: "salt", name: "Соль" },
+  ];
+  mount();
+  const user = userEvent.setup();
+  await user.click(await screen.findByRole("button", { name: "По тегам" }));
+  await screen.findByRole("region", { name: "Завтрак" });
+  return user;
+}
+
+test("grouped view repeats multi-tag items while totals and the flat view remain unique", async () => {
+  const user = await openGroupedList();
+  expect(screen.getByText("3 к покупке · 0 куплено")).toBeTruthy();
+  expect(
+    screen.getAllByRole("button", { name: "Открыть карточку: Молоко" }),
+  ).toHaveLength(2);
+  expect(
+    within(screen.getByRole("region", { name: "Завтрак" })).getAllByRole(
+      "listitem",
+    ),
+  ).toHaveLength(2);
+  expect(
+    within(screen.getByRole("region", { name: "Молочное" })).getAllByRole(
+      "listitem",
+    ),
+  ).toHaveLength(1);
+  expect(
+    within(screen.getByRole("region", { name: "Без тега" })).getByRole(
+      "button",
+      { name: "Открыть карточку: Соль" },
+    ),
+  ).toBeTruthy();
+  await user.click(screen.getByRole("button", { name: "Списком" }));
+  expect(screen.queryByRole("region", { name: "Завтрак" })).toBeNull();
+  expect(
+    screen.getAllByRole("button", { name: "Открыть карточку: Молоко" }),
+  ).toHaveLength(1);
+  expect(
+    screen
+      .getByRole("button", { name: "Списком" })
+      .getAttribute("aria-pressed"),
+  ).toBe("true");
+  expect(writes).toHaveLength(0);
+});
+
+test("buying from one group removes every copy; restoring returns it to both groups", async () => {
+  const user = await openGroupedList();
+  await user.click(
+    within(screen.getByRole("region", { name: "Молочное" })).getByRole(
+      "checkbox",
+      { name: "Отметить купленным: Молоко" },
+    ),
+  );
+  await waitFor(() =>
+    expect(screen.queryByRole("region", { name: "Молочное" })).toBeNull(),
+  );
+  expect(
+    screen.queryByRole("checkbox", { name: "Отметить купленным: Молоко" }),
+  ).toBeNull();
+  expect(screen.getByText("2 к покупке · 1 куплено")).toBeTruthy();
+  expect(writes[0].body).toEqual({
+    shopping_list_id: listId,
+    ids: [milk.id],
+    bought: true,
+  });
+  await user.click(screen.getByText("Куплено"));
+  const restore = screen.getByRole("checkbox", {
+    name: "Вернуть в покупки: Молоко",
+  });
+  await waitFor(() =>
+    expect((restore as HTMLInputElement).disabled).toBe(false),
+  );
+  await user.click(restore);
+  await screen.findByRole("region", { name: "Молочное" });
+  expect(
+    screen.getAllByRole("checkbox", { name: "Отметить купленным: Молоко" }),
+  ).toHaveLength(2);
+  expect(screen.getByText("3 к покупке · 0 куплено")).toBeTruthy();
+});
+
+test("tag filters limit groups and live updates move purchases between them", async () => {
+  const user = await openGroupedList();
+  const filters = within(
+    screen.getByRole("navigation", { name: "Фильтр по тегам" }),
+  );
+  await user.click(filters.getByRole("button", { name: "Молочное" }));
+  expect(screen.queryByRole("region", { name: "Завтрак" })).toBeNull();
+  expect(screen.queryByRole("region", { name: "Без тега" })).toBeNull();
+  expect(screen.getByText("1 к покупке · 0 куплено")).toBeTruthy();
+  await user.click(filters.getByRole("button", { name: "Завтрак" }));
+  expect(
+    screen.getAllByRole("button", { name: "Открыть карточку: Молоко" }),
+  ).toHaveLength(2);
+  expect(screen.getByText("2 к покупке · 0 куплено")).toBeTruthy();
+  await user.click(filters.getByRole("button", { name: "Все" }));
+  items = items.map((item) =>
+    item.id === milk.id ? { ...item, tags: [] } : item,
+  );
+  act(() => Stream.instances[0].onmessage?.());
+  await waitFor(() =>
+    expect(screen.queryByRole("region", { name: "Молочное" })).toBeNull(),
+  );
+  expect(
+    within(screen.getByRole("region", { name: "Без тега" })).getByRole(
+      "button",
+      { name: "Открыть карточку: Молоко" },
+    ),
+  ).toBeTruthy();
+  expect(
+    within(screen.getByRole("region", { name: "Завтрак" })).queryByRole(
+      "button",
+      { name: "Открыть карточку: Молоко" },
+    ),
+  ).toBeNull();
+  expect(writes).toHaveLength(0);
+});
+
+test("editing or deleting a grouped purchase changes the one shared item", async () => {
+  const user = await openGroupedList();
+  await user.click(
+    within(screen.getByRole("region", { name: "Молочное" })).getByRole(
+      "button",
+      { name: "Открыть карточку: Молоко" },
+    ),
+  );
+  const card = within(screen.getByRole("dialog"));
+  await user.clear(card.getByLabelText("Название"));
+  await user.type(card.getByLabelText("Название"), "Кефир");
+  await user.click(card.getByRole("button", { name: "Сохранить" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(
+    screen.getAllByRole("button", { name: "Открыть карточку: Кефир" }),
+  ).toHaveLength(2);
+  expect(writes[0].body).toEqual({ name: "Кефир" });
+  vi.spyOn(window, "confirm").mockReturnValue(true);
+  await user.click(
+    within(screen.getByRole("region", { name: "Завтрак" })).getByRole(
+      "button",
+      { name: "Удалить: Кефир" },
+    ),
+  );
+  await waitFor(() =>
+    expect(
+      screen.queryAllByRole("button", { name: "Открыть карточку: Кефир" }),
+    ).toHaveLength(0),
+  );
+  expect(screen.getByText("2 к покупке · 0 куплено")).toBeTruthy();
+  expect(items.map((item) => item.name)).toEqual(["Хлеб", "Соль"]);
 });

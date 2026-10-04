@@ -17,7 +17,9 @@ Review этапа MCP/PAT выявил повтор полей ItemUpdate в MCP
   и нормализованный ключ; Unit проверяет длину нормализованной единицы. Ключи не обрезаются.
   TagRead располагается в schemas/tags.py.
 - Payload определяется видом события: items_added требует results; операции позиций
-  требуют items; tag_renamed/tags_merged требуют tag и previous_tag; tag_deleted — tag.
+  требуют items; tag_renamed/tags_merged требуют tag и previous_tag; tag_created/tag_deleted — tag.
+  Для создания и удаления используется общий TagPayload с одним обязательным полем tag
+  (создание тега добавлено 2026-10-04 по запросу владельца).
   EventCreate/EventRead проверяют соответствие type и payload, варианты SSE объявляют
   конкретный тип payload. Пустые массивы допустимы для операций без изменённых позиций.
 - Миграция 0005 удаляет из существующих JSONB только неиспользуемые поля старого общего
@@ -30,7 +32,7 @@ Review этапа MCP/PAT выявил повтор полей ItemUpdate в MCP
 
 - Сравнение каждого PATCH-поля REST и плоской MCP JSON Schema; transport tests для
   пропуска, null, tags=[] и невалидных данных.
-- Пустой payload отклоняется для всех девяти событий; TS после сужения tags_merged
+- Пустой payload отклоняется для всех типов событий; TS после сужения tags_merged
   получает обязательные TagRead для обоих тегов.
 - Unicode lower expansion не выходит за пределы PostgreSQL VARCHAR; граничные значения
   успешно записываются в реальный Postgres.

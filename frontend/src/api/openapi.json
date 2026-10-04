@@ -1441,6 +1441,7 @@
             "items_bought": "#/components/schemas/ItemsBoughtEvent",
             "items_deleted": "#/components/schemas/ItemsDeletedEvent",
             "items_unbought": "#/components/schemas/ItemsUnboughtEvent",
+            "tag_created": "#/components/schemas/TagCreatedEvent",
             "tag_deleted": "#/components/schemas/TagDeletedEvent",
             "tag_renamed": "#/components/schemas/TagRenamedEvent",
             "tags_merged": "#/components/schemas/TagsMergedEvent"
@@ -1465,6 +1466,9 @@
           },
           {
             "$ref": "#/components/schemas/BoughtClearedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/TagCreatedEvent"
           },
           {
             "$ref": "#/components/schemas/TagRenamedEvent"
@@ -1531,6 +1535,89 @@
         "title": "TagChangedPayload",
         "type": "object"
       },
+      "TagCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "shopping_list_id": {
+            "format": "uuid",
+            "title": "Shopping List Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "shopping_list_id"
+        ],
+        "title": "TagCreate",
+        "type": "object"
+      },
+      "TagCreatedEvent": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/TagPayload"
+          },
+          "shopping_list_id": {
+            "format": "uuid",
+            "title": "Shopping List Id",
+            "type": "string"
+          },
+          "source": {
+            "discriminator": {
+              "mapping": {
+                "app": "#/components/schemas/AppSource",
+                "mcp": "#/components/schemas/McpSource"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AppSource"
+              },
+              {
+                "$ref": "#/components/schemas/McpSource"
+              }
+            ],
+            "title": "Source"
+          },
+          "type": {
+            "const": "tag_created",
+            "default": "tag_created",
+            "title": "Type",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shopping_list_id",
+          "user_id",
+          "source",
+          "payload",
+          "id",
+          "created_at"
+        ],
+        "title": "TagCreatedEvent",
+        "type": "object"
+      },
       "TagDeletedEvent": {
         "properties": {
           "created_at": {
@@ -1544,7 +1631,7 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/TagDeletedPayload"
+            "$ref": "#/components/schemas/TagPayload"
           },
           "shopping_list_id": {
             "format": "uuid",
@@ -1592,7 +1679,7 @@
         "title": "TagDeletedEvent",
         "type": "object"
       },
-      "TagDeletedPayload": {
+      "TagPayload": {
         "properties": {
           "tag": {
             "$ref": "#/components/schemas/TagRead"
@@ -1601,7 +1688,7 @@
         "required": [
           "tag"
         ],
-        "title": "TagDeletedPayload",
+        "title": "TagPayload",
         "type": "object"
       },
       "TagRead": {
@@ -3622,6 +3709,103 @@
           }
         ],
         "summary": "Get",
+        "tags": [
+          "tags"
+        ]
+      },
+      "post": {
+        "operationId": "create_api_tags_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Device-Id",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "X-Device-Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Требуется вход или неверные учётные данные"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Объект не найден"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Конфликт"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Некорректный запрос"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Внутренняя ошибка"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Create",
         "tags": [
           "tags"
         ]

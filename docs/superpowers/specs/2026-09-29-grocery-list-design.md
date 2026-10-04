@@ -110,7 +110,7 @@ REST и MCP — две «двери» к одной логике: поведен
 - **`events`**: `shopping_list_id`, `user_id`, `type`, `source jsonb`, `payload jsonb`.
   Типы v1: `items_added` (пачка, внутри — созданные и объединённые позиции), `item_updated`,
   `items_bought`, `items_unbought`, `items_deleted`, `bought_cleared`, `tag_renamed`, `tags_merged`,
-  `tag_deleted`.
+  `tag_created`, `tag_deleted`.
 - **`push_subscriptions`**: `user_id`, `device_id`, `endpoint` (уникальный), `p256dh`, `auth`,
   `device_label`, `last_success_at`.
 - **`notification_outbox`**: `event_id`, `subscription_id`, `status` (`pending` / `sent` / `failed`),
@@ -165,7 +165,10 @@ REST и MCP — две «двери» к одной логике: поведен
 
 ### 5.4. Теги
 
-- Свободные, равноправные, в рамках списка. Создаются неявно при назначении позиции.
+- Свободные, равноправные, в рамках списка. Создаются при назначении позиции или
+  заранее в разделе «Теги» (дополнение владельца 2026-10-04).
+- Явное создание: `POST /api/tags` с `shopping_list_id` и `name`; 201 с новым тегом,
+  409 при совпадении нормализованного имени. Событие `tag_created` публикуется после коммита.
 - Тег без позиций не удаляется автоматически (остаётся для автодополнения); удаляется вручную.
 - Переименование в имя уже существующего тега (сравнение по `name_normalized`) **объединяет теги**:
   позиции получают существующий тег, переименовываемый удаляется; событие `tags_merged`.
@@ -227,7 +230,7 @@ REST и MCP — две «двери» к одной логике: поведен
 - `PATCH /api/items/{id}`, `DELETE /api/items/{id}`
 - `POST /api/items/bought` — `{ids, bought}`
 - `POST /api/items/clear-bought`
-- `GET /api/tags`, `PATCH /api/tags/{id}` (переименование), `DELETE /api/tags/{id}`
+- `GET /api/tags`, `POST /api/tags` (создание), `PATCH /api/tags/{id}` (переименование), `DELETE /api/tags/{id}`
 - `POST /api/tags/{id}/bulk` — `{action: "mark_bought" | "delete_items"}`
 - `GET /api/events` — SSE-поток
 - `GET/POST/DELETE /api/push/subscriptions`, `GET /api/push/vapid-public-key`
@@ -314,7 +317,7 @@ Mobile-first (iPhone), светлая и тёмная темы; на дескт�
    - Живое появление новых позиций (лёгкая анимация/подсветка).
 3. **Карточка позиции** (bottom sheet) — название, количество, единица (выбор из списка + своя),
    теги с автодополнением, заметка, «Удалить».
-4. **Теги** — список тегов с числом позиций; переименовать, удалить; массовые действия
+4. **Теги** — создание тега без покупки, список тегов с числом позиций; переименовать, удалить; массовые действия
    «Отметить все купленными», «Удалить все позиции с тегом» (с подтверждением).
 5. **Настройки**
    - Уведомления: включить/выключить на этом устройстве, список устройств с возможностью удалить.

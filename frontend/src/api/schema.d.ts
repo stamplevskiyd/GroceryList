@@ -288,7 +288,8 @@ export interface paths {
         /** Get */
         get: operations["get_api_tags_get"];
         put?: never;
-        post?: never;
+        /** Create */
+        post: operations["create_api_tags_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1048,7 +1049,7 @@ export interface components {
          * ShoppingListEventRead
          * @description Named SSE contract; serialized as the original event object.
          */
-        ShoppingListEventRead: components["schemas"]["ItemsAddedEvent"] | components["schemas"]["ItemUpdatedEvent"] | components["schemas"]["ItemsBoughtEvent"] | components["schemas"]["ItemsUnboughtEvent"] | components["schemas"]["ItemsDeletedEvent"] | components["schemas"]["BoughtClearedEvent"] | components["schemas"]["TagRenamedEvent"] | components["schemas"]["TagsMergedEvent"] | components["schemas"]["TagDeletedEvent"];
+        ShoppingListEventRead: components["schemas"]["ItemsAddedEvent"] | components["schemas"]["ItemUpdatedEvent"] | components["schemas"]["ItemsBoughtEvent"] | components["schemas"]["ItemsUnboughtEvent"] | components["schemas"]["ItemsDeletedEvent"] | components["schemas"]["BoughtClearedEvent"] | components["schemas"]["TagCreatedEvent"] | components["schemas"]["TagRenamedEvent"] | components["schemas"]["TagsMergedEvent"] | components["schemas"]["TagDeletedEvent"];
         /** ShoppingListRead */
         ShoppingListRead: {
             /**
@@ -1072,6 +1073,47 @@ export interface components {
             previous_tag: components["schemas"]["TagRead"];
             tag: components["schemas"]["TagRead"];
         };
+        /** TagCreate */
+        TagCreate: {
+            /** Name */
+            name: string;
+            /**
+             * Shopping List Id
+             * Format: uuid
+             */
+            shopping_list_id: string;
+        };
+        /** TagCreatedEvent */
+        TagCreatedEvent: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            payload: components["schemas"]["TagPayload"];
+            /**
+             * Shopping List Id
+             * Format: uuid
+             */
+            shopping_list_id: string;
+            /** Source */
+            source: components["schemas"]["AppSource"] | components["schemas"]["McpSource"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "tag_created";
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
         /** TagDeletedEvent */
         TagDeletedEvent: {
             /**
@@ -1084,7 +1126,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            payload: components["schemas"]["TagDeletedPayload"];
+            payload: components["schemas"]["TagPayload"];
             /**
              * Shopping List Id
              * Format: uuid
@@ -1103,8 +1145,8 @@ export interface components {
              */
             user_id: string;
         };
-        /** TagDeletedPayload */
-        TagDeletedPayload: {
+        /** TagPayload */
+        TagPayload: {
             tag: components["schemas"]["TagRead"];
         };
         /** TagRead */
@@ -2457,6 +2499,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TagUsageRead"][];
+                };
+            };
+            /** @description Требуется вход или неверные учётные данные */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Объект не найден */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Конфликт */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Некорректный запрос */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Внутренняя ошибка */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_api_tags_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Device-Id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TagCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagRead"];
                 };
             };
             /** @description Требуется вход или неверные учётные данные */

@@ -24,7 +24,7 @@ from grocery.schemas.events import (
     ItemsAddedPayload,
     ItemsPayload,
     TagChangedPayload,
-    TagDeletedPayload,
+    TagPayload,
 )
 from grocery.schemas.items import AddItems, ItemCreate, ItemRead
 from grocery.schemas.sources import AppSource
@@ -240,7 +240,7 @@ def test_openapi_documents_typed_sse_and_cookie_security(app: FastAPI) -> None:
     union = schema["components"]["schemas"]["ShoppingListEventRead"]
     assert union["discriminator"]["propertyName"] == "type"
     assert set(union["discriminator"]["mapping"]) == {event.value for event in EventType}
-    assert len(union["oneOf"]) == 9
+    assert len(union["oneOf"]) == len(EventType)
     for status in (401, 404, 409, 422, 500):
         content = route["responses"][str(status)]["content"]
         assert set(content) == {"application/json"}
@@ -260,8 +260,8 @@ def test_all_event_variants_preserve_snapshot_json(event_type: EventType) -> Non
         payload = ItemsAddedPayload(results=[])
     elif event_type in (EventType.TAG_RENAMED, EventType.TAGS_MERGED):
         payload = TagChangedPayload(tag=tag, previous_tag=tag)
-    elif event_type == EventType.TAG_DELETED:
-        payload = TagDeletedPayload(tag=tag)
+    elif event_type in (EventType.TAG_CREATED, EventType.TAG_DELETED):
+        payload = TagPayload(tag=tag)
     else:
         payload = ItemsPayload(items=[])
     snapshot = EventRead(

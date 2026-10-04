@@ -113,11 +113,12 @@ def test_openapi_named_sse_union(schema: JsonSchema) -> None:
         "items_unbought",
         "items_deleted",
         "bought_cleared",
+        "tag_created",
         "tag_renamed",
         "tags_merged",
         "tag_deleted",
     }
-    assert len(union["oneOf"]) == 9
+    assert len(union["oneOf"]) == 10
 
 
 @pytest.mark.parametrize(
@@ -130,6 +131,7 @@ def test_openapi_named_sse_union(schema: JsonSchema) -> None:
         ("/api/items/bought", "post", "SetBought"),
         ("/api/items/clear-bought", "post", "ClearBought"),
         ("/api/tags/{id}", "patch", "TagUpdate"),
+        ("/api/tags", "post", "TagCreate"),
         ("/api/tags/{id}/bulk", "post", "TagBulk"),
     ],
 )

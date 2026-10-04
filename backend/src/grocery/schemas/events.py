@@ -23,11 +23,11 @@ class TagChangedPayload(BaseModel):
     previous_tag: TagRead
 
 
-class TagDeletedPayload(BaseModel):
+class TagPayload(BaseModel):
     tag: TagRead
 
 
-EventPayload = ItemsAddedPayload | ItemsPayload | TagChangedPayload | TagDeletedPayload
+EventPayload = ItemsAddedPayload | ItemsPayload | TagChangedPayload | TagPayload
 
 PAYLOAD_MODELS: dict[EventType, type[BaseModel]] = {
     EventType.ITEMS_ADDED: ItemsAddedPayload,
@@ -36,9 +36,10 @@ PAYLOAD_MODELS: dict[EventType, type[BaseModel]] = {
     EventType.ITEMS_UNBOUGHT: ItemsPayload,
     EventType.ITEMS_DELETED: ItemsPayload,
     EventType.BOUGHT_CLEARED: ItemsPayload,
+    EventType.TAG_CREATED: TagPayload,
     EventType.TAG_RENAMED: TagChangedPayload,
     EventType.TAGS_MERGED: TagChangedPayload,
-    EventType.TAG_DELETED: TagDeletedPayload,
+    EventType.TAG_DELETED: TagPayload,
 }
 
 
@@ -93,6 +94,11 @@ class BoughtClearedEvent(EventRead):
     type: Literal[EventType.BOUGHT_CLEARED] = EventType.BOUGHT_CLEARED
 
 
+class TagCreatedEvent(EventRead):
+    payload: TagPayload
+    type: Literal[EventType.TAG_CREATED] = EventType.TAG_CREATED
+
+
 class TagRenamedEvent(EventRead):
     payload: TagChangedPayload
     type: Literal[EventType.TAG_RENAMED] = EventType.TAG_RENAMED
@@ -104,7 +110,7 @@ class TagsMergedEvent(EventRead):
 
 
 class TagDeletedEvent(EventRead):
-    payload: TagDeletedPayload
+    payload: TagPayload
     type: Literal[EventType.TAG_DELETED] = EventType.TAG_DELETED
 
 
@@ -115,6 +121,7 @@ ShoppingListEvent = Annotated[
     | ItemsUnboughtEvent
     | ItemsDeletedEvent
     | BoughtClearedEvent
+    | TagCreatedEvent
     | TagRenamedEvent
     | TagsMergedEvent
     | TagDeletedEvent,

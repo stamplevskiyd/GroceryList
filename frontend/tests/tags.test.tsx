@@ -56,6 +56,18 @@ beforeEach(() => {
       );
     const body = request.method === "DELETE" ? null : await request.json();
     writes.push({ path, body, device: request.headers.get("X-Device-Id") });
+    if (request.method === "POST" && path === "/api/tags") {
+      if (
+        tags.some((tag) => tag.name.toLowerCase() === body.name.toLowerCase())
+      )
+        return Response.json(
+          { code: "conflict", message: "Тег с таким названием уже существует" },
+          { status: 409 },
+        );
+      const tag = { id: "created-tag", name: body.name };
+      tags.push(tag);
+      return Response.json(tag, { status: 201 });
+    }
     const id = path.split("/")[3];
     if (request.method === "PATCH") {
       if (failRename)
@@ -246,4 +258,43 @@ test("live tag deletion preserves the rename draft and disables saving", async (
     (screen.getByLabelText(/Новое название тега/) as HTMLInputElement).value,
   ).toBe("Запас дома");
   expect(writes).toHaveLength(0);
+});
+
+test("create an unused tag without a purchase; clear the draft only on success", async () => {
+  tags = [];
+  const user = mount();
+  await screen.findByRole("heading", { name: "Пока нет тегов" });
+  await user.type(screen.getByLabelText("Новый тег"), "  На   неделю  ");
+  await user.click(screen.getByRole("button", { name: "Создать тег" }));
+  await screen.findByText("Тег создан: На неделю");
+  await screen.findByText("На неделю", { selector: "summary > span" });
+  expect(writes[0]).toMatchObject({
+    path: "/api/tags",
+    body: { shopping_list_id: "list", name: "На неделю" },
+  });
+  expect(writes[0].device).toBeTruthy();
+  expect((screen.getByLabelText("Новый тег") as HTMLInputElement).value).toBe(
+    "",
+  );
+  expect(items).toHaveLength(3);
+  expect(screen.getByText("0 к покупке")).toBeTruthy();
+});
+
+test("duplicate tag creation preserves the input and allows correction", async () => {
+  const user = mount();
+  await user.type(screen.getByLabelText("Новый тег"), "овощи");
+  await user.click(screen.getByRole("button", { name: "Создать тег" }));
+  await screen.findByText("Тег с таким названием уже существует");
+  expect((screen.getByLabelText("Новый тег") as HTMLInputElement).value).toBe(
+    "овощи",
+  );
+  expect(tags).toHaveLength(3);
+  vi.spyOn(window, "confirm").mockReturnValue(false);
+  await user.click(screen.getByRole("button", { name: "← К списку" }));
+  expect(back).not.toHaveBeenCalled();
+  await user.clear(screen.getByLabelText("Новый тег"));
+  await user.type(screen.getByLabelText("Новый тег"), "Фрукты");
+  await user.click(screen.getByRole("button", { name: "Создать тег" }));
+  await screen.findByText("Тег создан: Фрукты");
+  expect(tags).toHaveLength(4);
 });

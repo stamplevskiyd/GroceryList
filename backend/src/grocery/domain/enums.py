@@ -23,6 +23,7 @@ class EventType(StrEnum):
     ITEMS_UNBOUGHT = "items_unbought"
     ITEMS_DELETED = "items_deleted"
     BOUGHT_CLEARED = "bought_cleared"
+    TAG_CREATED = "tag_created"
     TAG_RENAMED = "tag_renamed"
     TAGS_MERGED = "tags_merged"
     TAG_DELETED = "tag_deleted"

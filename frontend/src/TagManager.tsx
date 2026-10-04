@@ -29,6 +29,7 @@ export function TagManager({
     params: { query: { shopping_list_id: listId } },
   });
   const rename = $api.useMutation("patch", "/api/tags/{id}");
+  const create = $api.useMutation("post", "/api/tags");
   const remove = $api.useMutation("delete", "/api/tags/{id}");
   const bulk = $api.useMutation("post", "/api/tags/{id}/bulk");
   const [editing, setEditing] = useState<{
@@ -40,6 +41,8 @@ export function TagManager({
   const lock = useRef(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [newName, setNewName] = useState("");
+  const createInput = useRef<HTMLInputElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const nameInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -135,7 +138,12 @@ export function TagManager({
         type="button"
         disabled={busy}
         onClick={() => {
-          if (discard()) onBack();
+          if (
+            discard() &&
+            (!newName.trim() ||
+              confirm("Закрыть раздел без создания нового тега?"))
+          )
+            onBack();
         }}
       >
         ← К списку
@@ -156,9 +164,53 @@ export function TagManager({
         </button>
       </div>
       <p className="app-muted">
-        Теги создаются, когда вы назначаете их покупкам. Счётчик показывает,
-        сколько ещё нужно купить.
+        Создавайте теги заранее или назначайте новые в карточках покупок.
+        Счётчик показывает, сколько ещё нужно купить.
       </p>
+      <form
+        className="app-tag-editor"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const name = clean(newName);
+          if (!name || editing) return;
+          void action(
+            async () => {
+              const result = await create.mutateAsync({
+                params: { header: deviceHeaders },
+                body: { shopping_list_id: listId, name },
+              });
+              return `Тег создан: ${result.name}`;
+            },
+            () => {
+              setNewName("");
+              createInput.current?.focus();
+            },
+          );
+        }}
+      >
+        <label htmlFor="new-tag-name">Новый тег</label>
+        <input
+          id="new-tag-name"
+          ref={createInput}
+          value={newName}
+          onChange={(event) => setNewName(event.target.value)}
+          placeholder="Например, На неделю"
+          maxLength={255}
+          required
+          readOnly={busy}
+          disabled={!!editing}
+          autoComplete="off"
+        />
+        <div className="app-tag-actions">
+          <button
+            type="submit"
+            className="app-primary"
+            disabled={busy || !!editing || !clean(newName)}
+          >
+            Создать тег
+          </button>
+        </div>
+      </form>
       <p className="app-feedback" role="status">
         {busy ? "Сохраняем…" : notice}
       </p>
@@ -222,7 +274,7 @@ export function TagManager({
       ) : !tags.isError && !tags.data?.length ? (
         <div className="app-empty">
           <h2>Пока нет тегов</h2>
-          <p>Откройте карточку покупки и добавьте первый тег.</p>
+          <p>Создайте первый тег в форме выше или в карточке покупки.</p>
         </div>
       ) : (
         <ul className="app-tags-list">

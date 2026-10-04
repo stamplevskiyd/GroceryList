@@ -95,7 +95,18 @@ async def _seed_legacy_event_payloads(url: str) -> None:
                 ),
                 {"id": list_id, "owner": user_id},
             )
-            for type in EventType:
+            # These are the event kinds that existed in schema 0004.
+            for type in (
+                EventType.ITEMS_ADDED,
+                EventType.ITEM_UPDATED,
+                EventType.ITEMS_BOUGHT,
+                EventType.ITEMS_UNBOUGHT,
+                EventType.ITEMS_DELETED,
+                EventType.BOUGHT_CLEARED,
+                EventType.TAG_RENAMED,
+                EventType.TAGS_MERGED,
+                EventType.TAG_DELETED,
+            ):
                 payload: dict[str, object] = {
                     "items": [],
                     "results": [],

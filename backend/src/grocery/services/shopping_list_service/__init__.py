@@ -12,6 +12,7 @@ from grocery.db.repositories.shopping import item_repo, shopping_list_repo, tag_
 from grocery.db.session import get_current_session
 from grocery.domain.enums import AddStatus, EventType
 from grocery.domain.errors import (
+    ConflictError,
     ErrorDetail,
     InvalidInputError,
     ItemNotFoundError,
@@ -24,7 +25,7 @@ from grocery.schemas.events import (
     ItemsAddedPayload,
     ItemsPayload,
     TagChangedPayload,
-    TagDeletedPayload,
+    TagPayload,
 )
 from grocery.schemas.items import (
     AddItemResult,
@@ -274,6 +275,16 @@ async def clear_bought(shopping_list_id: UUID, source: Source) -> int:
     return await _delete_items(shopping_list_id, items, source, EventType.BOUGHT_CLEARED)
 
 
+async def create_tag(data: TagCreate, source: Source) -> TagRead:
+    await ensure_shopping_list_access(data.shopping_list_id, lock=True)
+    if await tag_repo.by_name(data.shopping_list_id, data.name_normalized) is not None:
+        raise ConflictError("Тег с таким названием уже существует")
+    tag = await tag_repo.add(data)
+    result = TagRead.model_validate(tag)
+    await record_event(data.shopping_list_id, EventType.TAG_CREATED, source, TagPayload(tag=result))
+    return result
+
+
 async def list_tags(shopping_list_id: UUID) -> list[TagUsageRead]:
     await ensure_shopping_list_access(shopping_list_id)
     return [
@@ -316,7 +327,7 @@ async def delete_tag(id: UUID, source: Source) -> None:
     snapshot = TagRead.model_validate(tag)
     await tag_repo.delete(tag)
     await record_event(
-        tag.shopping_list_id, EventType.TAG_DELETED, source, TagDeletedPayload(tag=snapshot)
+        tag.shopping_list_id, EventType.TAG_DELETED, source, TagPayload(tag=snapshot)
     )
 
 

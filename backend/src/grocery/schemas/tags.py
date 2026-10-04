@@ -17,6 +17,7 @@ class TagName(BaseModel):
 
 
 class TagCreate(TagName):
+    model_config = ConfigDict(extra="forbid")
     shopping_list_id: UUID
 
 

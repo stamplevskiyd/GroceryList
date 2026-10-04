@@ -7,7 +7,7 @@ from fastapi import APIRouter, Response
 from grocery.api.deps import AppSourceDep, Authenticated
 from grocery.api.errors import PROTECTED_RESPONSES
 from grocery.schemas.common import CountRead
-from grocery.schemas.tags import TagBulk, TagRead, TagUpdate, TagUsageRead
+from grocery.schemas.tags import TagBulk, TagCreate, TagRead, TagUpdate, TagUsageRead
 from grocery.services import shopping_list_service as service
 
 router = APIRouter(
@@ -18,6 +18,11 @@ router = APIRouter(
 @router.get("", response_model=list[TagUsageRead])
 async def get(shopping_list_id: UUID) -> list[TagUsageRead]:
     return await service.list_tags(shopping_list_id)
+
+
+@router.post("", response_model=TagRead, status_code=201)
+async def create(data: TagCreate, source: AppSourceDep) -> TagRead:
+    return await service.create_tag(data, source)
 
 
 @router.patch("/{id}", response_model=TagRead)

@@ -13,6 +13,7 @@ import {
 } from "./api/client.js";
 import type { components } from "./api/schema.js";
 import { ItemSheet } from "./ItemSheet.js";
+import { TagManager } from "./TagManager.js";
 import "./consent.js";
 import "./styles/app.css";
 
@@ -177,6 +178,7 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const [editing, setEditing] = useState<Item | null>(null);
+  const [managingTags, setManagingTags] = useState(false);
   const lock = useRef(false);
   const input = useRef<HTMLInputElement>(null);
   const itemsQuery = $api.useQuery(
@@ -349,12 +351,34 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
     );
   }
 
+  if (managingTags)
+    return (
+      <TagManager
+        listId={listId}
+        listName={
+          me.shopping_lists.find((list) => list.id === listId)?.name ??
+          "Покупки"
+        }
+        onLogout={onLogout}
+        onBack={() => {
+          setManagingTags(false);
+          setSelectedTags([]);
+        }}
+      />
+    );
+
   return (
     <div className="app-shell">
       <header className="app-topbar">
         <Brand />
         <div className="app-account">
           <span>{me.username}</span>
+          <button
+            disabled={working || !listId}
+            onClick={() => setManagingTags(true)}
+          >
+            Теги
+          </button>
           <button
             disabled={working}
             onClick={() =>

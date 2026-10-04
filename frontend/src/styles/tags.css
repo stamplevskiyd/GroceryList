@@ -1,0 +1,53 @@
+.app-tags-list {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0;
+}
+.app-tags-list > li {
+  border-bottom: 1px solid var(--line);
+}
+.app-tags-list summary {
+  cursor: pointer;
+  padding: 18px 4px;
+  min-height: 60px;
+  overflow-wrap: anywhere;
+}
+.app-tags-list summary > span:first-child {
+  margin-right: 12px;
+  font-weight: 500;
+}
+.app-tags-list summary > span:last-child {
+  white-space: nowrap;
+}
+.app-tag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 0 20px;
+}
+#app-root .app-tag-danger {
+  color: var(--danger);
+}
+.app-tag-editor {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.app-tag-editor label {
+  overflow-wrap: anywhere;
+}
+.app-tag-editor p {
+  margin: 0;
+}
+.app-tag-editor .app-tag-actions {
+  padding-bottom: 0;
+}
+@media (max-width: 600px) {
+  .app-tag-actions > button {
+    width: 100%;
+    text-align: left;
+  }
+}

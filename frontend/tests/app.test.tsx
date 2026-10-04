@@ -690,3 +690,28 @@ test("editing or deleting a grouped purchase changes the one shared item", async
   expect(screen.getByText("2 к покупке · 0 куплено")).toBeTruthy();
   expect(items.map((item) => item.name)).toEqual(["Хлеб", "Соль"]);
 });
+
+test("tag management keeps live updates and returns to the shopping list", async () => {
+  loggedIn = true;
+  items = [
+    { ...structuredClone(milk), tags: [{ id: "dairy", name: "Молочное" }] },
+  ];
+  mount();
+  const user = userEvent.setup();
+  await user.click(await screen.findByRole("button", { name: "Теги" }));
+  await screen.findByRole("heading", { name: "Теги" });
+  await screen.findByText("Молочное", { selector: "summary > span" });
+  expect(
+    screen.queryByRole("textbox", { name: "Добавить покупку" }),
+  ).toBeNull();
+  items = [{ ...milk, tags: [{ id: "dairy", name: "Молочные продукты" }] }];
+  act(() => Stream.instances[0].onmessage?.());
+  await screen.findByText("Молочные продукты", { selector: "summary > span" });
+  await user.click(screen.getByRole("button", { name: "← К списку" }));
+  await screen.findByRole("heading", { name: "Покупки" });
+  expect(
+    screen.getByRole("button", { name: "Открыть карточку: Молоко" }),
+  ).toBeTruthy();
+  expect(Stream.instances).toHaveLength(1);
+  expect(Stream.instances[0].close).not.toHaveBeenCalled();
+});

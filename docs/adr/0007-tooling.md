@@ -24,6 +24,7 @@
 - **import-linter** — слои и границы модулей (ADR-0001, ADR-0005, ADR-0008).
 - **shellcheck** — проверка `scripts/*.sh`; ставится как Python-пакет `shellcheck-py` в группу `dev`,
   без системной установки.
+- **actionlint** — проверка GitHub Actions; `actionlint-py` в группе `dev`, вызывается из `lint.sh`.
 - **pytest** + `pytest-asyncio` (`asyncio_mode = "auto"`,
   `asyncio_default_fixture_loop_scope = "session"` — движок БД и контейнер живут в одном цикле
   событий с тестами), `testcontainers[postgres]`, `httpx`, `pytest-cov` (отчёт без порога).

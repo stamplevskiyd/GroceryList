@@ -28,6 +28,7 @@ dev = [
     "pytest-socket>=0.8.1",
     "testcontainers>=4.15",
     "httpx>=0.28",
+    "actionlint-py>=1.7.12.25",
 ]
 
 [build-system]

@@ -1,0 +1,28 @@
+{
+	http_port {$CADDY_HTTP_PORT:8080}
+	https_port {$CADDY_HTTPS_PORT:8443}
+	# Local certificates stay inside the container; never install a host CA.
+	skip_install_trust
+}
+
+{$APP_PUBLIC_URL} {
+	@backend path /api /api/* /mcp /mcp/* /oauth /oauth/* /.well-known /.well-known/* /docs /docs/* /redoc /openapi.json
+	handle @backend {
+		reverse_proxy backend:8000 {
+			flush_interval -1
+		}
+	}
+
+	# Missing build assets must be 404s, not the SPA HTML document.
+	handle /assets/* {
+		root * /srv
+		file_server
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		header Cache-Control "no-cache"
+		file_server
+	}
+}

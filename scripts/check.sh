@@ -5,4 +5,5 @@ here="$(dirname "$0")"
 "$here/lint.sh"
 "$here/typecheck.sh"
 "$here/api.sh" --check
+npm run build --prefix "$(dirname "$0")/../frontend"
 "$here/test.sh"

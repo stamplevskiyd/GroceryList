@@ -18,18 +18,37 @@
 
 ## 2. Caddy и статика
 
-- [ ] Caddyfile: HTTPS, маршруты API/MCP/OAuth/discovery, SSE без буферизации, SPA fallback.
-- [ ] caddy.Dockerfile: сборка frontend → официальный Caddy. Сейчас frontend содержит
-  только контракт; добавить минимальную честную страницу до полноценного PWA этапа 7.
-- [ ] Полный Compose, проверка прокси MCP/SSE и локальный HTTPS smoke.
+- [x] Caddyfile: HTTPS, маршруты API/MCP/OAuth/discovery, SSE без буферизации, SPA fallback.
+- [x] caddy.Dockerfile: сборка frontend → официальный Caddy; минимальная стартовая
+  страница до полноценного PWA этапа 7.
+- [x] Compose: Caddy, постоянные volumes, настройка адреса и портов.
+- [ ] Проверка прокси MCP/SSE и локальный HTTPS smoke.
+
+Код Compose и стартовой страницы добавлен. Проверка в локальном браузере обязательна
+и выполняется владельцем вручную; ассистент пишет код и запускает штатные проверки,
+не управляет браузером и системными сертификатами. До ручной приёмки блок не закрывается.
+Страница до этапа 7 явно сообщает, что интерфейс списка ещё готовится.
+
+Проверки кода: `scripts/check.sh` — 473 теста, линтеры, типы, контракт API и сборка Vite
+успешны. `docker build -f caddy.Dockerfile -t grocerylist-caddy:stage5-check .` успешен;
+в сборке также проверен разбор Caddyfile. 2026-10-04 владелец подтвердил открытие страницы
+в Safari на `http://localhost:8080`; health через Caddy также вернул `ok`. Проверки
+HTTPS, MCP и SSE через Caddy остаются открытыми.
 
 ## 3. CI/CD
 
-- [ ] images.yml после успешного CI: main и v*, Docker Hub, SHA и версия, linux/amd64.
-- [ ] deploy.sh: SSH с pinned host key, Compose/backup script версии релиза,
+- [x] images.yml после успешного CI: main и v*, Docker Hub, SHA и версия, linux/amd64.
+- [x] deploy.sh: SSH с pinned host key, Compose/backup script версии релиза,
   pull, pre-deploy backup, миграции, health с ожидаемой версией, prune.
-- [ ] deploy.yml: ручной запуск и релизные теги, production environment, concurrency.
-- [ ] Runbook подготовки VPS, backup/restore и отката; lint и проверки workflow.
+- [x] deploy.yml: ручной запуск и релизные теги, production environment, concurrency.
+- [x] Runbook подготовки VPS, backup/restore и отката; lint и проверки workflow.
+
+Код CI/CD готов; workflow-файлы связываются через `needs`/`workflow_call`. Инструкция —
+[`../../deployment.md`](../../deployment.md). `scripts/check.sh` прошёл: 492 теста,
+включая 19 сценариев деплоя с подставными командами, ShellCheck, actionlint, типы и сборку.
+Новый backend-образ прошёл `scripts/check_runtime.sh`: версия не подменяется runtime
+переменной, миграции и backup/restore работают. Настоящие workflows, публикация образов
+в Docker Hub и SSH-деплой ещё не запускались; они входят во внешнюю приёмку.
 
 ## 4. Внешняя приёмка
 

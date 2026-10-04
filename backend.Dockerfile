@@ -16,6 +16,7 @@ RUN useradd --system --uid 10001 --create-home grocery
 COPY --from=build /app/.venv /app/.venv
 COPY backend/alembic.ini ./alembic.ini
 COPY --chmod=755 scripts/backend_entrypoint.sh /usr/local/bin/backend-entrypoint
+RUN printf '%s\n' "$APP_VERSION" > /app/VERSION
 USER grocery
 EXPOSE 8000
 ENTRYPOINT ["backend-entrypoint"]

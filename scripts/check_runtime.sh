@@ -23,11 +23,12 @@ done
 if [ "$ready" != true ]; then docker logs "$name-db"; exit 1; fi
 docker run -d --name "$name-backend" --network "$name" \
     -e APP_PUBLIC_URL=http://localhost:8000 \
+    -e APP_VERSION=incorrect-runtime-override \
     -e DB_URL=postgresql+asyncpg://postgres:smoke@postgres:5432/grocery "$image" >/dev/null
 ready=false
 for _ in {1..60}; do
     if docker exec "$name-backend" python -c \
-        'import json,os,urllib.request; data=json.load(urllib.request.urlopen("http://localhost:8000/api/health",timeout=2)); assert data == {"status":"ok","version":os.environ["APP_VERSION"]}' >/dev/null 2>&1; then ready=true; break; fi
+        'import json,urllib.request; from pathlib import Path; data=json.load(urllib.request.urlopen("http://localhost:8000/api/health",timeout=2)); assert data == {"status":"ok","version":Path("/app/VERSION").read_text().strip()}' >/dev/null 2>&1; then ready=true; break; fi
     sleep 1
 done
 if [ "$ready" != true ]; then docker logs "$name-backend"; exit 1; fi

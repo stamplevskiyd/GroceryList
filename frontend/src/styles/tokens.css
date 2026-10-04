@@ -1,0 +1,79 @@
+/*
+ * GroceryList — дизайн-токены «Жёлтый карандаш».
+ * Источник: docs/design/screens/Tokens.dc.html (макет в Claude Design).
+ *
+ * accent       — текст, иконки, рамки (контраст с фоном ≥ 4.5:1)
+ * accent-fill  — только заливки; текст поверх — on-accent
+ * ai           — метка «добавил Claude / ChatGPT»
+ * fresh        — подсветка только что появившейся позиции
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F2F2F4;
+  --ink: #1C1C1E;
+  --ink-2: #5B5B60;
+  --ink-3: #6E6E73;
+  --line: #E5E5EA;
+
+  --accent: #9C6500;
+  --accent-fill: #FFCC00;
+  --accent-soft: #FFF6D1;
+  --on-accent: #1C1C1E;
+
+  --ai: #5856D6;
+  --ai-soft: #EEEEFB;
+
+  --danger: #C4291C;
+  --danger-soft: #FDE7E5;
+  --on-danger: #FFFFFF;
+
+  --fresh: #FFF0A8;
+  --scrim: rgba(0, 0, 0, .35);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .05), 0 10px 30px rgba(0, 0, 0, .12);
+
+  /* Типографика */
+  --font-display: Literata, Georgia, serif;   /* заголовки, 600 */
+  --font-ui: Onest, system-ui, sans-serif;    /* интерфейс, 400–600 */
+
+  /* Радиусы */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 16px;
+  --radius-sheet: 24px;
+
+  /* Движение: новая позиция въезжает 0,45 с, подсветка гаснет за 1,6 с */
+  --motion-enter: .45s;
+  --motion-fresh-fade: 1.6s;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #1C1C1E;
+    --surface-2: #2C2C2E;
+    --ink: #F2F2F7;
+    --ink-2: #AEAEB2;
+    --ink-3: #98989D;
+    --line: #38383A;
+
+    --accent: #FFD60A;
+    --accent-fill: #FFD60A;
+    --accent-soft: #332B00;
+    --on-accent: #1C1C1E;
+
+    --ai: #A5A4FF;
+    --ai-soft: #25244A;
+
+    --danger: #FF6961;
+    --danger-soft: #3A1A18;
+    --on-danger: #1C1C1E;
+
+    --fresh: #3D3510;
+    --scrim: rgba(0, 0, 0, .6);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .5);
+  }
+}

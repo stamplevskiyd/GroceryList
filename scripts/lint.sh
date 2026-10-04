@@ -8,4 +8,6 @@ uv run lint-imports
 uv run python ../scripts/check_transactions.py
 uv run ruff check ../scripts/check_transactions.py
 uv run ruff format --check ../scripts/check_transactions.py
-uv run shellcheck ../scripts/*.sh
+cd ..
+uv run --project backend shellcheck scripts/*.sh
+uv run --project backend actionlint .github/workflows/*.yml

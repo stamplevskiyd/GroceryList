@@ -6,10 +6,11 @@ PWA-список покупок с MCP-сервером: ассистент (Cla
 - Что делает система — [спецификация](docs/superpowers/specs/2026-09-29-grocery-list-design.md)
 - Как устроен код — [ADR](docs/adr/README.md)
 - План работ — [docs/superpowers/plans](docs/superpowers/plans/README.md)
+- CI/CD, подготовка VPS и откат — [инструкция по деплою](docs/deployment.md)
 
 ## Разработка
 
-Нужны [uv](https://docs.astral.sh/uv/) ≥ 0.12, Docker и Node.js 22 с npm.
+Нужны [uv](https://docs.astral.sh/uv/) ≥ 0.12, Docker и Node.js ≥ 22.12 с npm.
 
 ```bash
 cp .env.example .env
@@ -60,7 +61,38 @@ APP_PUBLIC_URL=http://localhost \
 Без `--output` команда выводит только JSON в stdout. Экспорт использует версию Python-пакета,
 поэтому `APP_VERSION` не меняет контракт. Проверка `--check` сравнивает оба артефакта
 с новой генерацией во временной директории и не перезаписывает сохранённые файлы.
-Сейчас frontend содержит только инструменты контракта; React/PWA добавятся на этапе 7.
+Сейчас frontend содержит инструменты контракта и стартовую страницу со сборкой Vite;
+React/PWA и работа со списком в интерфейсе добавятся на этапе 7.
+
+### Стартовая страница и Caddy
+
+Посмотреть страницу вручную в браузере без Docker и настройки сертификатов:
+
+```bash
+npm run dev --prefix frontend
+```
+
+Откройте адрес из вывода Vite (обычно `http://127.0.0.1:5173`). Пока это статическая
+страница «Готовим приложение», без входа и операций со списком. Проверить вручную:
+широкое и узкое окно, светлая и тёмная темы, отсутствие горизонтального скролла.
+
+Образ `caddy.Dockerfile` собирает страницу через Vite и раздаёт её из Caddy.
+Профиль `runtime` включает Caddy; `/api`, `/mcp`, `/oauth`, `/.well-known`, Swagger
+и OpenAPI проксируются на backend с сохранением пути. Остальные страницы используют
+SPA fallback; отсутствующие `/assets/*` возвращают 404. Ответы API и SSE не попадают
+под SPA fallback; прокси передаёт поток без буферизации.
+
+Для полного runtime локально задайте `APP_PUBLIC_URL=https://localhost:8443` в `.env`.
+Caddy слушает loopback на 8080/8443; локальный сертификат остаётся в Docker-volume.
+Системное доверие к сертификатам автоматически не настраивается. Safari для входа
+требует HTTPS с доверенным сертификатом; HTTP-предпросмотр выше проверяет только статику.
+На VPS задайте `CADDY_BIND=0.0.0.0`, `CADDY_HTTP_PORT=80`, `CADDY_HTTPS_PORT=443`
+и `APP_PUBLIC_URL=https://ваш-домен`. При доступном домене Caddy получает публичный
+сертификат автоматически. Порт URL должен соответствовать порту выбранного протокола.
+
+Ручная приёмка полного окружения: открыть `/`, обновить вложенный адрес `/settings`,
+открыть `/docs`, выполнить login → `/api/me`; проверить MCP и получение SSE после
+изменения списка. Успешная сборка не заменяет эту проверку в браузере.
 
 ## MCP и PAT
 
@@ -87,7 +119,7 @@ OAuth-подключение claude.ai/ChatGPT появится на этапе 
 | Команда | Что делает |
 |---|---|
 | `make fmt` | форматирование и автоисправления ruff |
-| `make lint` | ruff, границы слоёв и сервисов (import-linter), запрет commit/rollback вне UoW, shellcheck |
+| `make lint` | ruff, границы слоёв и сервисов (import-linter), запрет commit/rollback вне UoW, shellcheck, actionlint |
 | `make typecheck` | mypy strict и TypeScript strict |
 | `make api` / `scripts/api.sh --check` | генерация / проверка актуальности OpenAPI и TS |
 | `make test` / `scripts/test.sh unit` | все тесты / только быстрые, без Docker |
@@ -97,7 +129,8 @@ OAuth-подключение claude.ai/ChatGPT появится на этапе 
 
 ## Контейнер backend и бэкапы (этап 5)
 
-Первый автономный блок деплоя готов; Caddy, CI/CD и production-приёмка остаются
+Образ backend и бэкапы проверены; Caddy, статика и код CI/CD добавлены. Проверка MCP/SSE
+через прокси, первый запуск GitHub Actions и production-приёмка остаются
 в [плане этапа 5](docs/superpowers/plans/2026-10-03-05-deploy-and-cd.md).
 После создания `.env` из `.env.example`:
 
@@ -108,10 +141,11 @@ docker compose exec backend python -m grocery create-user anna
 ```
 
 Backend перед запуском применяет Alembic-миграции; ошибка миграции завершает контейнер.
-`APP_VERSION` зашивается при сборке из `IMAGE_TAG`. В `.env` для запуска Python на хосте
+`APP_VERSION` зашивается в `/app/VERSION` при сборке из `IMAGE_TAG`; entrypoint читает
+его перед запуском, поэтому `.env` не может подменить версию контейнера. Для Python на хосте
 используется `DB_URL`, внутри контейнера — `CONTAINER_DB_URL`. Если меняете реквизиты
 Postgres, обновите оба URL; пароль в URL должен быть URL-encoded. Порт backend доступен
-только на localhost. HTTPS-прокси для входа с Secure cookie добавляется следующим блоком.
+только на localhost. Внешние запросы проходят через Caddy; настройки адреса описаны выше.
 
 Backup сохраняет custom-format архивы в volume `postgres-backups` каждые
 `BACKUP_INTERVAL_SECONDS` (по умолчанию сутки), оставляя `BACKUP_KEEP` последних копий.

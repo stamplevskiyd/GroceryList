@@ -1,6 +1,25 @@
-# Postgres для разработки; профиль runtime включает backend и ежедневные бэкапы.
-# Caddy и CI/CD добавляются следующими задачами этапа 5 (ADR-0015).
+# Postgres для разработки; runtime — backend, Caddy и ежедневные бэкапы.
 services:
+  caddy:
+    profiles: [runtime]
+    image: ${DOCKERHUB_USER:-stamplevskiyd}/grocerylist-caddy:${IMAGE_TAG:-dev}
+    build:
+      context: .
+      dockerfile: caddy.Dockerfile
+    environment:
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:?Set APP_PUBLIC_URL in .env}
+      CADDY_HTTP_PORT: ${CADDY_HTTP_PORT:-8080}
+      CADDY_HTTPS_PORT: ${CADDY_HTTPS_PORT:-8443}
+    ports:
+      - "${CADDY_BIND:-127.0.0.1}:${CADDY_HTTP_PORT:-8080}:${CADDY_HTTP_PORT:-8080}"
+      - "${CADDY_BIND:-127.0.0.1}:${CADDY_HTTPS_PORT:-8443}:${CADDY_HTTPS_PORT:-8443}"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
   backend:
     profiles: [runtime]
     image: ${DOCKERHUB_USER:-stamplevskiyd}/grocerylist-backend:${IMAGE_TAG:-dev}
@@ -12,7 +31,6 @@ services:
     env_file: .env
     environment:
       DB_URL: ${CONTAINER_DB_URL:-postgresql+asyncpg://grocery:grocery@postgres:5432/grocery}
-      APP_VERSION: ${IMAGE_TAG:-dev}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -64,5 +82,7 @@ services:
       retries: 10
 
 volumes:
+  caddy-data:
+  caddy-config:
   postgres-data:
   postgres-backups:

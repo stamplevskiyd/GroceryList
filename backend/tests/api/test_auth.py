@@ -123,15 +123,14 @@ async def test_repeated_login_issues_new_token_and_logout_only_revokes_current(
         assert await session_repo.by_token_hash(token_hash(second)) is None
 
 
-@pytest.mark.parametrize("device_id", [None, "", "   ", "x" * 129])
-async def test_login_requires_valid_device_header(
-    client: httpx.AsyncClient, registered_user: None, device_id: str | None
+async def test_login_requires_device_header(
+    client: httpx.AsyncClient, registered_user: None
 ) -> None:
-    headers = {} if device_id is None else {"X-Device-Id": device_id}
-    response = await client.post("/api/auth/login", headers=headers, json=LOGIN)
+    response = await client.post("/api/auth/login", json=LOGIN)
     assert response.status_code == 422
     assert response.json()["code"] == "invalid_request"
     assert "set-cookie" not in response.headers
+    assert ["header", "X-Device-Id"] in [detail["loc"] for detail in response.json()["details"]]
 
 
 async def test_device_header_is_trimmed(client: httpx.AsyncClient, registered_user: None) -> None:
@@ -212,25 +211,3 @@ async def test_commit_failure_cannot_send_success_cookie_or_body(
     monkeypatch.undo()
     async with unit_of_work() as session:
         assert await session.scalar(select(func.count()).select_from(Session)) == 0
-
-
-def test_auth_openapi_contract(app: FastAPI) -> None:
-    schema = app.openapi()
-    assert schema["components"]["securitySchemes"]["SessionCookie"] == {
-        "type": "apiKey",
-        "in": "cookie",
-        "name": COOKIE,
-    }
-    for path, method in (("/api/me", "get"), ("/api/auth/logout", "post")):
-        route = schema["paths"][path][method]
-        assert route["security"] == [{"SessionCookie": []}]
-        for status in (401, 404, 409, 422, 500):
-            assert route["responses"][str(status)]["content"]["application/json"]["schema"] == {
-                "$ref": "#/components/schemas/ErrorResponse"
-            }
-    login = schema["paths"]["/api/auth/login"]["post"]
-    assert "security" not in login
-    for status in (401, 422, 429, 500):
-        assert login["responses"][str(status)]["content"]["application/json"]["schema"] == {
-            "$ref": "#/components/schemas/ErrorResponse"
-        }

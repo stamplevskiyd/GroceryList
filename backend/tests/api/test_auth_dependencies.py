@@ -32,9 +32,18 @@ def add_protected_probe(app: FastAPI) -> None:
     app.include_router(router)
 
 
-@pytest.mark.parametrize("body", [{}, {"required": "invalid"}, {"required": 1}])
-@pytest.mark.parametrize("headers", [{}, {"X-Device-Id": "   "}, {"X-Device-Id": "x" * 129}])
-@pytest.mark.parametrize("cookie", [None, "random-token"])
+# Exercise each invalid input and both authentication branches without a Cartesian product.
+@pytest.mark.parametrize(
+    ("body", "headers", "cookie"),
+    [
+        pytest.param({}, {"X-Device-Id": "phone"}, None, id="missing-body"),
+        pytest.param({"required": "invalid"}, {"X-Device-Id": "phone"}, None, id="invalid-body"),
+        pytest.param({"required": 1}, {}, None, id="missing-header"),
+        pytest.param({"required": 1}, {"X-Device-Id": "   "}, "random-token", id="blank-header"),
+        pytest.param({"required": 1}, {"X-Device-Id": "x" * 129}, "random-token", id="long-header"),
+        pytest.param({}, {}, "random-token", id="invalid-body-and-header"),
+    ],
+)
 async def test_authentication_precedes_header_and_body_validation(
     app: FastAPI,
     client: httpx.AsyncClient,
@@ -72,6 +81,7 @@ async def test_authenticated_mutation_requires_device_header(
     )
     assert response.status_code == 422
     assert response.json()["code"] == "invalid_request"
+    assert ["header", "X-Device-Id"] in [detail["loc"] for detail in response.json()["details"]]
     response = await client.post(
         "/api/auth/logout", headers={} if device_id is None else {"X-Device-Id": device_id}
     )

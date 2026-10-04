@@ -30,6 +30,25 @@ class UnmappedDomainError(DomainError):
     code = "private-diagnostic-code"
 
 
+# JSON parsing is shared by body-bearing routes; endpoint auth is checked separately.
+@pytest.mark.parametrize(
+    ("method", "path"), [("POST", "/api/items"), ("PATCH", "/api/tags/bad-uuid")]
+)
+async def test_malformed_json_is_parsed_before_authentication(
+    client: httpx.AsyncClient, method: str, path: str
+) -> None:
+    response = await client.request(
+        method,
+        path,
+        headers={"Content-Type": "application/json"},
+        content=b'{"private":',
+    )
+    assert response.status_code == 422
+    assert response.json()["code"] == "invalid_request"
+    assert response.json()["details"][0]["loc"][0] == "body"
+    assert "private" not in response.text
+
+
 @pytest.fixture
 def error_client(app: FastAPI) -> httpx.AsyncClient:
     # Starlette may re-raise an exception after sending its 500 response.

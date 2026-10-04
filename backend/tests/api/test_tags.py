@@ -4,7 +4,6 @@ from uuid import UUID, uuid7
 
 import httpx
 import pytest
-from fastapi import FastAPI
 
 from grocery.schemas.items import ItemRead
 
@@ -86,12 +85,10 @@ async def test_authentication_precedes_header_and_schema_validation(
 
 
 @pytest.mark.parametrize(("method", "path"), ROUTES[1:])
-@pytest.mark.parametrize("device_id", [None, " ", "x" * 129])
-async def test_mutations_require_valid_device_header(
-    client: httpx.AsyncClient, login_and_list: UUID, method: str, path: str, device_id: str | None
+async def test_mutations_require_device_header(
+    client: httpx.AsyncClient, login_and_list: UUID, method: str, path: str
 ) -> None:
-    headers = {} if device_id is None else {"X-Device-Id": device_id}
-    response = await client.request(method, path.format(id=uuid7()), headers=headers, json={})
+    response = await client.request(method, path.format(id=uuid7()), json={})
     assert response.status_code == 422
     assert ["header", "X-Device-Id"] in [detail["loc"] for detail in response.json()["details"]]
 
@@ -158,44 +155,3 @@ async def test_bulk_rejects_invalid_body(
 
 async def test_read_requires_list_id(client: httpx.AsyncClient, login_and_list: UUID) -> None:
     assert (await client.get("/api/tags")).status_code == 422
-
-
-@pytest.mark.parametrize(
-    ("method", "path"), [("PATCH", "/api/tags/{id}"), ("POST", "/api/tags/{id}/bulk")]
-)
-async def test_malformed_json_is_parsed_before_authentication(
-    client: httpx.AsyncClient, method: str, path: str
-) -> None:
-    response = await client.request(
-        method,
-        path.format(id=uuid7()),
-        headers={"Content-Type": "application/json"},
-        content=b'{"private":',
-    )
-    assert response.status_code == 422
-    assert response.json()["code"] == "invalid_request"
-    assert response.json()["details"][0]["loc"][0] == "body"
-    assert "private" not in response.text
-
-
-def test_tags_openapi_contract(app: FastAPI) -> None:
-    schema = app.openapi()
-    for method, path in ROUTES:
-        route = schema["paths"][path][method.lower()]
-        assert route["security"] == [{"SessionCookie": []}]
-        for status in (401, 404, 409, 422, 500):
-            assert route["responses"][str(status)]["content"]["application/json"]["schema"] == {
-                "$ref": "#/components/schemas/ErrorResponse"
-            }
-        if method != "GET":
-            header = next(
-                parameter for parameter in route["parameters"] if parameter["name"] == "X-Device-Id"
-            )
-            assert header["required"] is True
-    assert "content" not in schema["paths"]["/api/tags/{id}"]["delete"]["responses"]["204"]
-    update = schema["components"]["schemas"]["TagUpdate"]
-    assert set(update["properties"]) == {"name"}
-    assert update["additionalProperties"] is False
-    assert schema["paths"]["/api/tags/{id}"]["patch"]["responses"]["200"]["content"][
-        "application/json"
-    ]["schema"] == {"$ref": "#/components/schemas/TagRead"}

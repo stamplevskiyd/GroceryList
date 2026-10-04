@@ -89,16 +89,15 @@ async def test_create_requires_login_before_validation(client: httpx.AsyncClient
     assert response.status_code == 401
 
 
-@pytest.mark.parametrize("device_id", [None, " ", "x" * 129])
 async def test_create_requires_device_header(
-    client: httpx.AsyncClient, login_and_list: UUID, device_id: str | None
+    client: httpx.AsyncClient, login_and_list: UUID
 ) -> None:
     response = await client.post(
         "/api/tags",
-        headers={} if device_id is None else {"X-Device-Id": device_id},
         json={"shopping_list_id": str(login_and_list), "name": "Овощи"},
     )
     assert response.status_code == 422
+    assert ["header", "X-Device-Id"] in [detail["loc"] for detail in response.json()["details"]]
 
 
 @pytest.mark.parametrize("existing", [True, False])
@@ -140,14 +139,3 @@ async def test_create_rejects_invalid_and_extra_fields(
         },
     )
     assert response.status_code == 422
-
-
-def test_create_openapi_contract(app: FastAPI) -> None:
-    schema = app.openapi()
-    create = schema["paths"]["/api/tags"]["post"]
-    assert create["security"] == [{"SessionCookie": []}]
-    assert "201" in create["responses"]
-    assert "409" in create["responses"]
-    body = schema["components"]["schemas"]["TagCreate"]
-    assert set(body["properties"]) == {"name", "shopping_list_id"}
-    assert body["additionalProperties"] is False

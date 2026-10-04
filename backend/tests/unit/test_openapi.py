@@ -15,6 +15,7 @@ from grocery import __main__ as cli
 from grocery import main as application
 from grocery.config import get_settings
 from grocery.db import session
+from grocery.domain.enums import EventType
 from grocery.main import create_app
 from grocery.services import auth
 
@@ -22,25 +23,26 @@ from grocery.services import auth
 JsonSchema = dict[str, Any]
 
 OPERATIONS = [
-    ("/api/health", "get", "HealthRead", False),
-    ("/api/auth/login", "post", "MeRead", False),
-    ("/api/auth/logout", "post", None, True),
-    ("/api/me", "get", "MeRead", True),
-    ("/api/items", "get", "ItemRead", True),
-    ("/api/items", "post", "AddItemResult", True),
-    ("/api/items/quick-add", "post", "QuickAddResult", True),
-    ("/api/items/{id}", "patch", "ItemRead", True),
-    ("/api/items/{id}", "delete", None, True),
-    ("/api/items/bought", "post", "ItemRead", True),
-    ("/api/items/clear-bought", "post", "CountRead", True),
-    ("/api/tags", "get", "TagUsageRead", True),
-    ("/api/tags/{id}", "patch", "TagRead", True),
-    ("/api/tags/{id}", "delete", None, True),
-    ("/api/tags/{id}/bulk", "post", "CountRead", True),
-    ("/api/events", "get", "ShoppingListEventRead", True),
-    ("/api/tokens", "get", "TokenRead", True),
-    ("/api/tokens", "post", "TokenIssued", True),
-    ("/api/tokens/{id}", "delete", None, True),
+    ("/api/health", "get", 200, "HealthRead", False),
+    ("/api/auth/login", "post", 200, "MeRead", False),
+    ("/api/auth/logout", "post", 204, None, True),
+    ("/api/me", "get", 200, "MeRead", True),
+    ("/api/items", "get", 200, "ItemRead", True),
+    ("/api/items", "post", 200, "AddItemResult", True),
+    ("/api/items/quick-add", "post", 200, "QuickAddResult", True),
+    ("/api/items/{id}", "patch", 200, "ItemRead", True),
+    ("/api/items/{id}", "delete", 204, None, True),
+    ("/api/items/bought", "post", 200, "ItemRead", True),
+    ("/api/items/clear-bought", "post", 200, "CountRead", True),
+    ("/api/tags", "get", 200, "TagUsageRead", True),
+    ("/api/tags", "post", 201, "TagRead", True),
+    ("/api/tags/{id}", "patch", 200, "TagRead", True),
+    ("/api/tags/{id}", "delete", 204, None, True),
+    ("/api/tags/{id}/bulk", "post", 200, "CountRead", True),
+    ("/api/events", "get", 200, "ShoppingListEventRead", True),
+    ("/api/tokens", "get", 200, "TokenRead", True),
+    ("/api/tokens", "post", 200, "TokenIssued", True),
+    ("/api/tokens/{id}", "delete", 204, None, True),
 ]
 
 
@@ -49,13 +51,13 @@ def schema() -> JsonSchema:
     return create_app().openapi()
 
 
-@pytest.mark.parametrize(("path", "method", "model", "protected"), OPERATIONS)
+@pytest.mark.parametrize(("path", "method", "status", "model", "protected"), OPERATIONS)
 def test_openapi_http_contract(
-    schema: JsonSchema, path: str, method: str, model: str | None, protected: bool
+    schema: JsonSchema, path: str, method: str, status: int, model: str | None, protected: bool
 ) -> None:
     operation = schema["paths"][path][method]
     assert operation.get("security", []) == ([{"SessionCookie": []}] if protected else [])
-    success = operation["responses"]["204" if model is None else "200"]
+    success = operation["responses"][str(status)]
     assert success["description"]
     if model is None:
         assert "content" not in success
@@ -64,20 +66,28 @@ def test_openapi_http_contract(
         media_type = "text/event-stream" if path == "/api/events" else "application/json"
         if path == "/api/events":
             data = content[media_type]["itemSchema"]["properties"]["data"]
-            assert data["contentMediaType"] == "application/json"
-            assert data["contentSchema"] == {"$ref": f"#/components/schemas/{model}"}
+            assert data == {
+                "type": "string",
+                "contentMediaType": "application/json",
+                "contentSchema": {"$ref": f"#/components/schemas/{model}"},
+            }
         else:
             response_schema = content[media_type]["schema"]
-            assert f"#/components/schemas/{model}" in json.dumps(response_schema)
+            reference = {"$ref": f"#/components/schemas/{model}"}
+            if response_schema.get("type") == "array":
+                assert response_schema["items"] == reference
+            else:
+                assert response_schema == reference
     if method in {"post", "patch", "delete"}:
         headers = [p for p in operation["parameters"] if p["in"] == "header"]
         assert any(p["name"] == "X-Device-Id" and p["required"] for p in headers)
     errors = (401, 404, 409, 422, 500) if protected else (401, 422, 429, 500)
     if path == "/api/health":
         return
-    for status in errors:
-        response = operation["responses"][str(status)]
+    for error_status in errors:
+        response = operation["responses"][str(error_status)]
         assert response["description"]
+        assert set(response["content"]) == {"application/json"}
         assert response["content"]["application/json"]["schema"] == {
             "$ref": "#/components/schemas/ErrorResponse"
         }
@@ -118,7 +128,8 @@ def test_openapi_named_sse_union(schema: JsonSchema) -> None:
         "tags_merged",
         "tag_deleted",
     }
-    assert len(union["oneOf"]) == 10
+    assert set(union["discriminator"]["mapping"]) == {event.value for event in EventType}
+    assert len(union["oneOf"]) == len(union["discriminator"]["mapping"])
 
 
 @pytest.mark.parametrize(
@@ -141,6 +152,11 @@ def test_openapi_request_models(schema: JsonSchema, path: str, method: str, mode
     assert body["content"]["application/json"]["schema"] == {
         "$ref": f"#/components/schemas/{model}"
     }
+    if model in {"TagCreate", "TagUpdate"}:
+        tag_schema = schema["components"]["schemas"][model]
+        expected_fields = {"name", "shopping_list_id"} if model == "TagCreate" else {"name"}
+        assert set(tag_schema["properties"]) == expected_fields
+        assert tag_schema["additionalProperties"] is False
 
 
 @pytest.mark.parametrize("path", ["/api/items", "/api/tags", "/api/events"])

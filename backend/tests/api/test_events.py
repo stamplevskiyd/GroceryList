@@ -227,28 +227,6 @@ async def test_other_lists_and_rolled_back_events_are_not_delivered(
     assert login_and_list not in event_hub._subscribers
 
 
-def test_openapi_documents_typed_sse_and_cookie_security(app: FastAPI) -> None:
-    schema = app.openapi()
-    route = schema["paths"]["/api/events"]["get"]
-    assert route["security"] == [{"SessionCookie": []}]
-    stream_schema = route["responses"]["200"]["content"]["text/event-stream"]
-    assert stream_schema["itemSchema"]["properties"]["data"] == {
-        "type": "string",
-        "contentMediaType": "application/json",
-        "contentSchema": {"$ref": "#/components/schemas/ShoppingListEventRead"},
-    }
-    union = schema["components"]["schemas"]["ShoppingListEventRead"]
-    assert union["discriminator"]["propertyName"] == "type"
-    assert set(union["discriminator"]["mapping"]) == {event.value for event in EventType}
-    assert len(union["oneOf"]) == len(EventType)
-    for status in (401, 404, 409, 422, 500):
-        content = route["responses"][str(status)]["content"]
-        assert set(content) == {"application/json"}
-        assert content["application/json"]["schema"] == {
-            "$ref": "#/components/schemas/ErrorResponse"
-        }
-
-
 @pytest.mark.parametrize("event_type", list(EventType))
 def test_all_event_variants_preserve_snapshot_json(event_type: EventType) -> None:
     from grocery.schemas.events import ShoppingListEventRead

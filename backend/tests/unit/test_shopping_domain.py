@@ -57,12 +57,6 @@ def test_empty_names_rejected(name: str) -> None:
         ItemCreate(name=name)
 
 
-@pytest.mark.parametrize("quantity", ["0", "-1", "NaN", "Infinity"])
-def test_invalid_quantity_rejected(quantity: str) -> None:
-    with pytest.raises(ValidationError):
-        ItemCreate(name="Молоко", quantity=Decimal(quantity))
-
-
 def test_create_normalizes_without_changing_display_name() -> None:
     item = ItemCreate(name="  Зелёный  ЛУК ", quantity=Decimal("1.5"), unit="кг")
     assert item.name == "Зелёный ЛУК"

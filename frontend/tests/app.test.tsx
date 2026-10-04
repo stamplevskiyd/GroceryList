@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+  fireEvent,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { components } from "../src/api/schema.js";
@@ -46,6 +54,7 @@ let loggedIn: boolean;
 let items: Item[];
 let failAdd: boolean;
 let duplicateUser: boolean;
+let failPatch: boolean;
 let client: QueryClient;
 const writes: Array<{ path: string; body: unknown; device: string | null }> =
   [];
@@ -55,6 +64,22 @@ beforeEach(() => {
   loggedIn = false;
   failAdd = false;
   duplicateUser = false;
+  failPatch = false;
+  // JSDOM has no native dialog top layer; model its open state for form tests.
+  Object.defineProperties(HTMLDialogElement.prototype, {
+    showModal: {
+      configurable: true,
+      value: function (this: HTMLDialogElement) {
+        this.setAttribute("open", "");
+      },
+    },
+    close: {
+      configurable: true,
+      value: function (this: HTMLDialogElement) {
+        this.removeAttribute("open");
+      },
+    },
+  });
   items = [];
   writes.length = 0;
   Stream.instances = [];
@@ -93,6 +118,57 @@ beforeEach(() => {
       );
     if (path === "/api/me") return json(me);
     if (request.method === "GET" && path === "/api/items") return json(items);
+    if (request.method === "GET" && path === "/api/tags")
+      return json([
+        { id: "breakfast-tag", name: "Завтрак", open_count: 0 },
+        ...items.flatMap((item) =>
+          item.tags.map((tag) => ({ ...tag, open_count: 1 })),
+        ),
+      ]);
+    if (request.method === "PATCH" && path.startsWith("/api/items/")) {
+      const body =
+        (await request.json()) as components["schemas"]["ItemUpdate"];
+      writes.push({ path, body, device: request.headers.get("X-Device-Id") });
+      if (failPatch)
+        return json(
+          {
+            code: "conflict",
+            message: "Позиция с таким названием уже существует",
+          },
+          409,
+        );
+      const id = path.split("/").at(-1);
+      items = items.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              name: body.name ?? item.name,
+              quantity:
+                "quantity" in body
+                  ? body.quantity == null
+                    ? null
+                    : Number(body.quantity)
+                  : item.quantity,
+              unit: "unit" in body ? (body.unit ?? null) : item.unit,
+              note: "note" in body ? (body.note ?? null) : item.note,
+              tags: body.tags
+                ? body.tags.map((name, index) => ({ id: `tag-${index}`, name }))
+                : item.tags,
+              updated_at: "2026-10-04T01:00:00Z",
+            }
+          : item,
+      );
+      return json(items.find((item) => item.id === id));
+    }
+    if (request.method === "DELETE" && path.startsWith("/api/items/")) {
+      writes.push({
+        path,
+        body: null,
+        device: request.headers.get("X-Device-Id"),
+      });
+      items = items.filter((item) => item.id !== path.split("/").at(-1));
+      return new Response(null, { status: 204 });
+    }
     if (request.method === "POST") {
       const body = request.headers.get("content-type")?.includes("json")
         ? await request.json()
@@ -126,6 +202,7 @@ afterEach(() => {
   cleanup();
   client.clear();
   fetchMock.mockReset();
+  vi.restoreAllMocks();
 });
 
 test("registration validates confirmation, then opens the new list without a second login", async () => {
@@ -276,4 +353,158 @@ test("SSE reloads server state and renders item names as text", async () => {
   await screen.findByText("<img src=x onerror=alert(1)>");
   expect(document.querySelector("img")).toBeNull();
   expect(Stream.instances[0].url).toContain(listId);
+});
+
+async function openCard(item: Item = milk) {
+  loggedIn = true;
+  items = [structuredClone(item)];
+  mount();
+  const user = userEvent.setup();
+  const opener = await screen.findByRole("button", {
+    name: `Открыть карточку: ${item.name}`,
+  });
+  await user.click(opener);
+  const dialog = await screen.findByRole("dialog", {
+    name: "Карточка покупки",
+  });
+  return { user, card: within(dialog), dialog, opener };
+}
+
+test("card saves name, decimal quantity, chosen unit, existing/new tags and note", async () => {
+  const { user, card } = await openCard();
+  await user.clear(card.getByLabelText("Название"));
+  await user.type(card.getByLabelText("Название"), "Мука");
+  await user.clear(card.getByLabelText("Количество"));
+  await user.type(card.getByLabelText("Количество"), "1,5");
+  await user.selectOptions(card.getByLabelText("Единица"), "кг");
+  await user.click(await card.findByRole("button", { name: "Завтрак" }));
+  await user.type(card.getByLabelText("Теги"), "Выпечка");
+  await user.type(card.getByLabelText("Заметка"), "Для блинов");
+  await user.click(card.getByRole("button", { name: "Сохранить" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(writes[0]).toMatchObject({
+    path: `/api/items/${milk.id}`,
+    body: {
+      name: "Мука",
+      quantity: "1.5",
+      unit: "кг",
+      tags: ["Завтрак", "Выпечка"],
+      note: "Для блинов",
+    },
+  });
+  expect(writes[0].device).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: "Открыть карточку: Мука" }),
+  ).toBeTruthy();
+  expect(document.body.classList.contains("item-sheet-open")).toBe(false);
+});
+
+test("clearing optional fields sends nulls and an empty tag list", async () => {
+  const { user, card } = await openCard({
+    ...milk,
+    note: "Без лактозы",
+    tags: [{ id: "dairy", name: "Молочное" }],
+  });
+  await user.clear(card.getByLabelText("Количество"));
+  await user.selectOptions(card.getByLabelText("Единица"), "");
+  await user.clear(card.getByLabelText("Заметка"));
+  await user.click(card.getByRole("button", { name: "Убрать тег «Молочное»" }));
+  await user.click(card.getByRole("button", { name: "Сохранить" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(writes[0].body).toEqual({
+    quantity: null,
+    unit: null,
+    note: null,
+    tags: [],
+  });
+});
+
+test("a failed patch preserves the draft and permits retry", async () => {
+  failPatch = true;
+  const { user, card } = await openCard();
+  await user.clear(card.getByLabelText("Название"));
+  await user.type(card.getByLabelText("Название"), "Кефир");
+  await user.click(card.getByRole("button", { name: "Сохранить" }));
+  expect((await card.findByRole("alert")).textContent).toContain(
+    "уже существует",
+  );
+  expect((card.getByLabelText("Название") as HTMLInputElement).value).toBe(
+    "Кефир",
+  );
+  failPatch = false;
+  await user.click(card.getByRole("button", { name: "Сохранить" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(items[0].name).toBe("Кефир");
+});
+
+test("SSE does not erase a draft and a note edit does not overwrite a remote quantity", async () => {
+  const { user, card } = await openCard();
+  await user.type(card.getByLabelText("Заметка"), "К утру");
+  items = [{ ...milk, quantity: 7, updated_at: "2026-10-04T00:30:00Z" }];
+  act(() => Stream.instances[0].onmessage?.());
+  await card.findByText(/Позиция обновилась/);
+  expect((card.getByLabelText("Заметка") as HTMLTextAreaElement).value).toBe(
+    "К утру",
+  );
+  await user.click(card.getByRole("button", { name: "Сохранить" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(writes[0].body).toEqual({ note: "К утру" });
+  expect(items[0].quantity).toBe(7);
+});
+
+test("Escape and close protect unsaved input, cancel writes nothing and restores focus", async () => {
+  const { user, card, dialog, opener } = await openCard();
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  await user.type(card.getByLabelText("Заметка"), "Не сохранять");
+  fireEvent(dialog, new Event("cancel", { cancelable: true }));
+  expect(confirm).toHaveBeenCalled();
+  expect(screen.getByRole("dialog")).toBeTruthy();
+  confirm.mockReturnValue(true);
+  await user.click(card.getByRole("button", { name: "Закрыть карточку" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(writes).toHaveLength(0);
+  expect(document.activeElement).toBe(opener);
+});
+
+test("card deletion requires confirmation and removes the item", async () => {
+  const { user, card } = await openCard();
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  await user.click(card.getByRole("button", { name: "Удалить покупку" }));
+  expect(writes).toHaveLength(0);
+  confirm.mockReturnValue(true);
+  await user.click(card.getByRole("button", { name: "Удалить покупку" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(items).toHaveLength(0);
+  expect(writes[0].path).toBe(`/api/items/${milk.id}`);
+});
+
+test("invalid quantity stays local; a custom unit can then be saved", async () => {
+  const { user, card } = await openCard();
+  await user.clear(card.getByLabelText("Количество"));
+  await user.type(card.getByLabelText("Количество"), "0");
+  await user.click(card.getByRole("button", { name: "Сохранить" }));
+  expect((await card.findByRole("alert")).textContent).toContain("больше нуля");
+  expect(writes).toHaveLength(0);
+  await user.clear(card.getByLabelText("Количество"));
+  await user.type(card.getByLabelText("Количество"), "3");
+  await user.selectOptions(card.getByLabelText("Единица"), "custom");
+  await user.type(card.getByLabelText("Своя единица"), "бутылка");
+  await user.click(card.getByRole("button", { name: "Сохранить" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(writes[0].body).toEqual({ quantity: "3", unit: "бутылка" });
+});
+
+test("remote deletion disables saving without discarding the visible draft", async () => {
+  const { user, card } = await openCard();
+  await user.type(card.getByLabelText("Заметка"), "Черновик");
+  items = [];
+  act(() => Stream.instances[0].onmessage?.());
+  expect((await card.findByRole("alert")).textContent).toContain("уже удалена");
+  expect(
+    (card.getByRole("button", { name: "Сохранить" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(true);
+  expect((card.getByLabelText("Заметка") as HTMLTextAreaElement).value).toBe(
+    "Черновик",
+  );
 });

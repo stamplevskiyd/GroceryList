@@ -12,6 +12,7 @@ import {
   isUnauthenticated,
 } from "./api/client.js";
 import type { components } from "./api/schema.js";
+import { ItemSheet } from "./ItemSheet.js";
 import "./consent.js";
 import "./styles/app.css";
 
@@ -20,6 +21,13 @@ type Item = components["schemas"]["ItemRead"];
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
+
+function refreshShopping(cache: QueryClient) {
+  return Promise.all([
+    cache.invalidateQueries({ queryKey: ["get", "/api/items"] }),
+    cache.invalidateQueries({ queryKey: ["get", "/api/tags"] }),
+  ]);
+}
 
 function Brand() {
   return (
@@ -167,6 +175,7 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
+  const [editing, setEditing] = useState<Item | null>(null);
   const lock = useRef(false);
   const input = useRef<HTMLInputElement>(null);
   const itemsQuery = $api.useQuery(
@@ -183,8 +192,7 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
   const clear = $api.useMutation("post", "/api/items/clear-bought");
   const logout = $api.useMutation("post", "/api/auth/logout");
 
-  const refresh = () =>
-    cache.invalidateQueries({ queryKey: ["get", "/api/items"] });
+  const refresh = () => refreshShopping(cache);
   useEffect(() => {
     if (!listId) return;
     setConnected(false);
@@ -193,14 +201,14 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
     );
     stream.onopen = () => {
       setConnected(true);
-      void cache.invalidateQueries({ queryKey: ["get", "/api/items"] });
+      void refreshShopping(cache);
     };
     stream.onmessage = () => {
-      void cache.invalidateQueries({ queryKey: ["get", "/api/items"] });
+      void refreshShopping(cache);
     };
     stream.onerror = () => {
       setConnected(false);
-      void cache.invalidateQueries({ queryKey: ["get", "/api/items"] });
+      void refreshShopping(cache);
     };
     return () => stream.close();
   }, [listId, cache]);
@@ -275,19 +283,29 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
             )
           }
         />
-        <div className="app-item-text">
-          <div className="app-item-title">
+        <button
+          type="button"
+          className="app-item-text"
+          aria-label={`Открыть карточку: ${item.name}`}
+          disabled={working}
+          onClick={() => setEditing(item)}
+        >
+          <span className="app-item-title">
             <span>{item.name}</span>
             {quantity && <span className="app-quantity">{quantity}</span>}
-          </div>
+          </span>
           {!!item.tags.length && (
-            <div className="app-item-tags">
+            <span className="app-item-tags">
               {item.tags.map((tag) => (
                 <span key={tag.id}>{tag.name}</span>
               ))}
-            </div>
+            </span>
           )}
-          {item.note && <p className="app-small app-muted">{item.note}</p>}
+          {item.note && (
+            <span className="app-item-note app-small app-muted">
+              {item.note}
+            </span>
+          )}
           {item.sources
             .filter((source) => source.kind === "mcp")
             .map((source, index) => (
@@ -295,7 +313,7 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
                 добавил {source.client_name}
               </span>
             ))}
-        </div>
+        </button>
         <button
           className="app-delete"
           aria-label={`Удалить: ${item.name}`}
@@ -531,6 +549,24 @@ function Shopping({ me, onLogout }: { me: Me; onLogout: () => void }) {
             {add.isPending ? "…" : "+"}
           </button>
         </form>
+      )}
+      {editing && (
+        <ItemSheet
+          key={editing.id}
+          item={editing}
+          current={
+            itemsQuery.data
+              ? items.find((item) => item.id === editing.id)
+              : editing
+          }
+          onClose={() => setEditing(null)}
+          onLogout={onLogout}
+          onSaved={(message) => {
+            setEditing(null);
+            setError("");
+            setNotice(message);
+          }}
+        />
       )}
     </div>
   );

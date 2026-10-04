@@ -9,18 +9,39 @@
     <link rel="stylesheet" href="/src/styles/landing.css" />
   </head>
   <body>
-    <main>
+    <main id="landing">
       <header><span class="brand-mark" aria-hidden="true">✓</span> GroceryList</header>
-      <section aria-labelledby="title">
-        <p class="eyebrow">Меньше вспоминать. Проще покупать.</p>
-        <h1 id="title">Покупки<br />под рукой.</h1>
-        <p class="intro">Один список для ваших планов на ужин, походов в магазин и идей от ассистента.</p>
-        <div class="notice">
-          <span class="notice-dot" aria-hidden="true"></span>
-          <div><h2>Готовим приложение</h2><p>Скоро здесь можно будет добавлять покупки и отмечать купленное — на телефоне и в браузере ноутбука.</p></div>
-        </div>
-      </section>
-      <footer>GroceryList <span aria-hidden="true">·</span> Всё нужное — в одном списке</footer>
+      <p role="status">Загружаем покупки…</p>
+      <noscript>Для работы со списком включите JavaScript в браузере.</noscript>
     </main>
+    <div id="app-root"></div>
+    <template id="consent-template">
+      <main class="consent">
+        <header><span class="brand-mark" aria-hidden="true">✓</span> GroceryList</header>
+        <h1>Подключение ассистента</h1>
+        <p id="consent-status" role="status" aria-live="polite">Проверяем запрос…</p>
+        <form id="login-form" hidden>
+          <h2>Войдите в GroceryList</h2>
+          <label>Логин<input id="username" name="username" autocomplete="username" required maxlength="64" /></label>
+          <label>Пароль<input id="password" name="password" type="password" autocomplete="current-password" required /></label>
+          <button id="sign-in" class="primary" type="submit">Войти</button>
+          <p class="muted">Используйте учётную запись, созданную администратором GroceryList.</p>
+        </form>
+        <form id="decision-form" hidden>
+          <h2><span id="client-name"></span> запрашивает доступ</h2>
+          <p>Вы вошли как <strong id="signed-in-user"></strong>.</p>
+          <p>Ассистент сможет читать и изменять ваши списки покупок, включая удаление позиций.</p>
+          <p id="offline-notice" class="muted" hidden>Доступ сохранится после закрытия страницы. Его можно отозвать.</p>
+          <div class="callback"><strong>Возврат на <span id="redirect-host"></span></strong><p id="redirect-address"></p></div>
+          <p id="loopback-notice" class="warning" hidden>Это приложение на вашем компьютере. Разрешайте доступ, только если вы сами начали его подключение.</p>
+          <p class="muted">Подтверждайте только то подключение, которое начали сами.</p>
+          <div class="actions">
+            <button id="deny-access" type="submit" value="deny">Отклонить</button>
+            <button class="primary" type="submit" value="allow">Разрешить доступ</button>
+          </div>
+        </form>
+      </main>
+    </template>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

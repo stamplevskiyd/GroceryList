@@ -11,7 +11,7 @@ from fastapi import FastAPI
 
 from grocery.api.errors import register_error_handlers
 from grocery.api.routers import auth as auth_router
-from grocery.api.routers import events, health, items, me, tags, tokens
+from grocery.api.routers import events, health, items, me, oauth, tags, tokens
 from grocery.config import get_settings
 from grocery.db.session import configure_engine, dispose_engine
 from grocery.mcp_server.server import create_mcp
@@ -44,6 +44,8 @@ def create_app() -> FastAPI:
     app.include_router(tags.router, prefix="/api")
     app.include_router(events.router, prefix="/api")
     app.include_router(tokens.router, prefix="/api")
+    app.include_router(oauth.router)
+    app.include_router(oauth.protected_router, prefix="/api")
     server, mcp_app = create_mcp(get_settings().app)
     app.state.mcp = server
     app.mount("/", mcp_app)

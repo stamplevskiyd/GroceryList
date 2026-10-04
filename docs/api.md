@@ -43,15 +43,18 @@ PAT `gl_pat_…` предназначен для MCP и не авторизуе�
 
 ## MCP
 
-Streamable HTTP `/mcp` принимает `Authorization: Bearer <PAT>`, без cookie.
+Streamable HTTP `/mcp` принимает `Authorization: Bearer <token>`: PAT либо OAuth access token,
+без cookie. Refresh token предназначен только для `/oauth/token` и `/oauth/revoke`.
 Доступны `get_shopping_list`, `list_tags`, `add_items`, `update_item`, `set_bought`,
 `remove_items`. `shopping_list_id` необязателен при единственном доступном списке;
 с несколькими списками передайте UUID явно. Теги фильтруются по нормализованному точному имени.
-PATCH различает пропуск и null; tags=[] очищает теги. Источник берётся из PAT, не из аргументов.
+PATCH различает пропуск и null; tags=[] очищает теги. Источник берётся из PAT или
+OAuth-клиента, не из аргументов инструментов.
 
 Открытые metadata: `/.well-known/oauth-protected-resource/mcp` и корневой alias
 `/.well-known/oauth-protected-resource`. Ответ 401 указывает рабочий resource_metadata.
-OAuth AS появится на этапе 6; сейчас OAuth access/refresh tokens отклоняются.
+OAuth AS: `/.well-known/oauth-authorization-server`, CIMD/DCR, PKCE и ротация refresh.
+Эндпоинты согласия и подключённых приложений описаны в [OAuth](oauth.md).
 `APP_PUBLIC_URL` задаёт origin без path/query/fragment/credentials; от него строится
 канонный resource `/mcp`, Host/Origin allowlist и CORS. MCP не перенаправляет `/mcp` на `/mcp/`.
 

@@ -6,4 +6,5 @@ here="$(dirname "$0")"
 "$here/typecheck.sh"
 "$here/api.sh" --check
 npm run build --prefix "$(dirname "$0")/../frontend"
+npm test --prefix "$(dirname "$0")/../frontend"
 "$here/test.sh"

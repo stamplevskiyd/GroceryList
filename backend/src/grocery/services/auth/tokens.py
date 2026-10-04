@@ -15,6 +15,7 @@ from grocery.domain.errors import NotFoundError
 from grocery.schemas.tokens import BearerIdentity, TokenCreate, TokenIssued, TokenRead, TokenStored
 from grocery.services.auth.context import get_current_user
 from grocery.services.auth.errors import AuthError
+from grocery.services.auth.oauth import verify_access
 from grocery.services.auth.sessions import token_hash
 
 
@@ -43,10 +44,9 @@ async def revoke_token(id: UUID) -> None:
 
 
 async def verify_bearer(raw: str) -> BearerIdentity | None:
-    # OAuth access tokens are added by stage 6. No positive cache: revoke applies
-    # to every new HTTP request. Record use independently of the subsequent tool.
+    # No positive cache: revocation applies to every new HTTP request.
     if not raw.startswith("gl_pat_"):
-        return None
+        return await verify_access(raw)
     token = await token_repo.by_hash(token_hash(raw))
     if token is None or token.revoked_at is not None or await user_repo.get(token.user_id) is None:
         return None

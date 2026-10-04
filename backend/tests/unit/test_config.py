@@ -52,6 +52,13 @@ def test_get_settings_is_cached() -> None:
 
 def test_auth_defaults_support_existing_environment() -> None:
     assert Settings().auth.model_dump() == {
+        "oauth_access_ttl_seconds": 3600,
+        "oauth_refresh_ttl_seconds": 2592000,
+        "oauth_code_ttl_seconds": 300,
+        "oauth_request_ttl_seconds": 600,
+        "oauth_refresh_grace_seconds": 60,
+        "cimd_timeout_seconds": 5,
+        "cimd_max_bytes": 65536,
         "session_ttl_seconds": 2592000,
         "login_username_limit": 5,
         "login_ip_limit": 30,

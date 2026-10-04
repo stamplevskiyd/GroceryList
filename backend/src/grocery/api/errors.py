@@ -15,6 +15,7 @@ from grocery.domain.errors import (
 )
 from grocery.schemas.errors import ErrorResponse
 from grocery.services.auth.errors import AuthError, TooManyAttemptsError
+from grocery.services.auth.oauth_errors import OAuthError
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,16 @@ def _internal_error_response(exc: Exception) -> JSONResponse:
 
 
 def register_error_handlers(app: FastAPI) -> None:
+    @app.exception_handler(OAuthError)
+    async def oauth_error_handler(request: Request, exc: OAuthError) -> JSONResponse:
+        headers = {"Cache-Control": "no-store", "Pragma": "no-cache"}
+        if request.url.path.startswith("/oauth/"):
+            headers["Access-Control-Allow-Origin"] = "*"
+        status = 429 if exc.response.error == "temporarily_unavailable" else 400
+        if status == 429:
+            headers["Retry-After"] = "60"
+        return JSONResponse(exc.response.model_dump(), status_code=status, headers=headers)
+
     @app.exception_handler(AuthError)
     async def auth_error_handler(request: Request, exc: AuthError) -> JSONResponse:
         return _error_response(401, ErrorResponse(code=exc.code, message=str(exc)))

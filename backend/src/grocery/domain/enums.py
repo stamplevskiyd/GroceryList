@@ -1,6 +1,11 @@
 from enum import StrEnum
 
 
+class ClientRegistration(StrEnum):
+    CIMD = "cimd"
+    DCR = "dcr"
+
+
 class MemberRole(StrEnum):
     OWNER = "owner"
     EDITOR = "editor"

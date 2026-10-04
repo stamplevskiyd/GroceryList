@@ -118,14 +118,17 @@ REST и MCP — две «двери» к одной логике: поведен
 - **Auth**:
   - `sessions`: `user_id`, `token_hash`, `expires_at`, `device_id`
   - `personal_access_tokens`: `user_id`, `name`, `token_hash`, `last_used_at`, `revoked_at`
-  - `oauth_clients`: `client_id`, `client_name`, `redirect_uris`, `registration_type` (`cimd` / `dcr`),
-    для CIMD — время загрузки документа (кэш)
-  - `oauth_authorization_requests`: ожидающие согласия запросы `/oauth/authorize` (параметры,
-    PKCE challenge, `resource`, `expires_at`)
-  - `oauth_codes`: код, PKCE challenge, `client_id`, `user_id`, `redirect_uri`, `scope`, `resource`,
-    `expires_at`
-  - `oauth_tokens`: `access_token_hash`, `refresh_token_hash`, `client_id`, `user_id`, `scope`,
-    `resource`, `expires_at`, `revoked_at`, `family_id` и `rotated_at` (цепочка ротации refresh)
+  - `oauth_clients`: `client_id`, типизированный JSONB `client_metadata` (имя, redirect URI,
+    grant/response types), `registration_type` (`cimd` / `dcr`), `cache_expires_at`
+  - `oauth_authorization_requests`: `client_pk`, типизированные параметры (включая PKCE и
+    resource), `browser_token_hash`, `user_id`, `expires_at`, `consumed_at`
+  - `oauth_grants`: одно согласие и семейство токенов — `client_pk`, `user_id`, `scope`,
+    `resource`, `expires_at`, `revoked_at`; строка блокируется при ротации и отзыве
+  - `oauth_codes`: `token_hash`, `family_id`, `code_challenge`, `redirect_uri`,
+    `expires_at`, `consumed_at`
+  - `oauth_tokens`: `access_token_hash`, необязательный `refresh_token_hash`, `family_id`,
+    `expires_at` (access), `rotated_at`, `revoked_at` (только access).
+    Общий срок и отзыв цепочки — в `oauth_grants`.
 
 Все токены хранятся только в виде хешей; исходное значение показывается один раз.
 

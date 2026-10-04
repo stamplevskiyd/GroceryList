@@ -45,6 +45,13 @@ class DbSettings(BaseModel):
 
 
 class AuthSettings(BaseModel):
+    oauth_access_ttl_seconds: int = Field(default=3600, gt=0)
+    oauth_refresh_ttl_seconds: int = Field(default=2592000, gt=0)
+    oauth_code_ttl_seconds: int = Field(default=300, gt=0)
+    oauth_request_ttl_seconds: int = Field(default=600, gt=0)
+    oauth_refresh_grace_seconds: int = Field(default=60, gt=0)
+    cimd_timeout_seconds: float = Field(default=5, gt=0, le=8)
+    cimd_max_bytes: int = Field(default=65536, gt=0)
     session_ttl_seconds: int = Field(default=2592000, gt=0)
     login_username_limit: int = Field(default=5, gt=0)
     login_ip_limit: int = Field(default=30, gt=0)

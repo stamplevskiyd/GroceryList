@@ -13,6 +13,19 @@
 		}
 	}
 
+	@consent path /consent /consent/
+	handle @consent {
+		root * /srv
+		rewrite * /index.html
+		header {
+			Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+			Referrer-Policy "no-referrer"
+			X-Frame-Options "DENY"
+			Cache-Control "no-store"
+		}
+		file_server
+	}
+
 	# Missing build assets must be 404s, not the SPA HTML document.
 	handle /assets/* {
 		root * /srv
@@ -23,6 +36,11 @@
 		root * /srv
 		try_files {path} /index.html
 		header Cache-Control "no-cache"
+		header {
+			Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+			Referrer-Policy "no-referrer"
+			X-Frame-Options "DENY"
+		}
 		file_server
 	}
 }

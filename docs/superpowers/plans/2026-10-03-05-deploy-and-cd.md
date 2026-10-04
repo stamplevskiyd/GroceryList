@@ -47,17 +47,27 @@ HTTPS, MCP и SSE через Caddy остаются открытыми.
 [`../../deployment.md`](../../deployment.md). `scripts/check.sh` прошёл: 492 теста,
 включая 19 сценариев деплоя с подставными командами, ShellCheck, actionlint, типы и сборку.
 Новый backend-образ прошёл `scripts/check_runtime.sh`: версия не подменяется runtime
-переменной, миграции и backup/restore работают. Настоящие workflows, публикация образов
-в Docker Hub и SSH-деплой ещё не запускались; они входят во внешнюю приёмку.
+переменной, миграции и backup/restore работают. 2026-10-04 настоящие workflows проверили
+код, опубликовали образы `v0.1.1` и запустили контейнеры на VPS. Для environment secrets
+вызову reusable deploy workflow потребовался `secrets: inherit` (исправлено в `be88b9f`).
 
 ## 4. Внешняя приёмка
 
-- [ ] Доступ к VPS, GitHub/Docker Hub secrets; первый deploy.
+- [x] Доступ к VPS, Docker, deploy-пользователь, GitHub/Docker Hub secrets, публикация образов.
+- [x] Запуск runtime `v0.1.1` на VPS: миграции, healthy backend/Postgres, ежедневный backup.
+- [x] Backup/restore на VPS в отдельную временную БД: схема `0005`, тестовая БД удалена.
+- [ ] Успешный внешний health и завершение первого deploy.
 - [ ] HTTPS и Cloudflare: SSE, MCP handshake, metadata и отсутствие обрывов.
 - [ ] Подключение Claude Code по PAT владельца.
 
 Этап считается выполненным после внешней приёмки. Самостоятельная подготовка инфраструктуры
 не означает успешного production deploy.
+
+На 2026-10-04 внешний домен `s157254.love-is.nexus` через Cloudflare перенаправляет на
+`https://h2.nexus`, ACME-проверка до VPS не доходит. Внутри VPS health версии `v0.1.1`
+успешен. [Релизный workflow](https://github.com/stamplevskiyd/GroceryList/actions/runs/37192486668)
+остановился на проверке публичного HTTPS; `last-successful` не установлен.
+Нужно направить домен на `94.159.101.162`, затем повторить failed job и внешнюю приёмку.
 
 ## Результат первого блока — 2026-10-03
 

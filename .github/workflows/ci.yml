@@ -47,5 +47,7 @@ jobs:
     needs: images
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/deploy.yml
+    # Required for environment secrets in reusable workflows (actions/runner#4453).
+    secrets: inherit
     with:
       tag: ${{ github.ref_name }}

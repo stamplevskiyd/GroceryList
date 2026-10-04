@@ -8,6 +8,6 @@ class AuthError(Exception):
 
 
 class TooManyAttemptsError(Exception):
-    def __init__(self, retry_after: int) -> None:
-        super().__init__("Слишком много попыток входа")
+    def __init__(self, retry_after: int, *, message: str = "Слишком много попыток входа") -> None:
+        super().__init__(message)
         self.retry_after = retry_after

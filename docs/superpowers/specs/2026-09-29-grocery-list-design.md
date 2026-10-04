@@ -219,7 +219,7 @@ REST и MCP — две «двери» к одной логике: поведен
 Аутентификация — cookie-сессия (`HttpOnly`, `Secure`, `SameSite=Lax`). Схема — OpenAPI,
 из неё генерируется TypeScript-клиент.
 
-- `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/me`
+- `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/me`
 - `GET /api/health` — публичный: `{status, version}`, проверка БД (деплой и healthcheck, ADR-0015)
 - `GET /api/items?include_bought=` — позиции (весь список; фильтр по тегам — на клиенте, §5.7)
 - `POST /api/items` — пакетное добавление структурированных позиций (то же правило merge)
@@ -234,8 +234,9 @@ REST и MCP — две «двери» к одной логике: поведен
 - `GET/POST/DELETE /api/tokens` — PAT
 - `GET/DELETE /api/oauth/grants` — подключённые приложения
 
-Первичное создание пользователя — CLI-командой в контейнере (`python -m app create-user`),
-публичной регистрации нет.
+Публичная регистрация добавлена по решению владельца 2026-10-04: логин и пароль,
+автоматический вход, новый личный список «Покупки». Повтор занятого логина — конфликт;
+частые попытки ограничиваются. CLI `python -m grocery create-user` остаётся доступен.
 
 ### 6.2. MCP
 

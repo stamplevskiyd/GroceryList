@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator
 
 
 class LoginCreate(BaseModel):
@@ -12,6 +12,17 @@ class LoginCreate(BaseModel):
 
     username: Annotated[str, AfterValidator(str.strip), Field(min_length=1, max_length=64)]
     password: str = Field(min_length=1, repr=False)
+
+
+class RegistrationCreate(LoginCreate):
+    password: str = Field(min_length=8, max_length=128, repr=False)
+
+    @field_validator("password")
+    @classmethod
+    def nonblank_password(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Пароль не может состоять только из пробелов")
+        return value
 
 
 class SessionCreate(BaseModel):

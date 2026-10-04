@@ -45,6 +45,7 @@ class Stream {
 let loggedIn: boolean;
 let items: Item[];
 let failAdd: boolean;
+let duplicateUser: boolean;
 let client: QueryClient;
 const writes: Array<{ path: string; body: unknown; device: string | null }> =
   [];
@@ -53,6 +54,7 @@ beforeEach(() => {
   vi.stubGlobal("EventSource", Stream);
   loggedIn = false;
   failAdd = false;
+  duplicateUser = false;
   items = [];
   writes.length = 0;
   Stream.instances = [];
@@ -66,6 +68,23 @@ beforeEach(() => {
     if (path === "/api/auth/login") {
       loggedIn = true;
       return json(me);
+    }
+    if (path === "/api/auth/register") {
+      writes.push({
+        path,
+        body: await request.json(),
+        device: request.headers.get("X-Device-Id"),
+      });
+      if (duplicateUser)
+        return json(
+          {
+            code: "conflict",
+            message: "Пользователь с таким логином уже существует",
+          },
+          409,
+        );
+      loggedIn = true;
+      return json(me, 201);
     }
     if (!loggedIn)
       return json(
@@ -107,6 +126,74 @@ afterEach(() => {
   cleanup();
   client.clear();
   fetchMock.mockReset();
+});
+
+test("registration validates confirmation, then opens the new list without a second login", async () => {
+  mount();
+  const user = userEvent.setup();
+  await user.click(
+    await screen.findByRole("button", {
+      name: "Нет аккаунта? Зарегистрироваться",
+    }),
+  );
+  await user.type(screen.getByLabelText("Логин"), "anna");
+  await user.type(screen.getByLabelText("Пароль"), "new-long-password");
+  await user.type(
+    screen.getByLabelText("Повторите пароль"),
+    "different-password",
+  );
+  await user.click(screen.getByRole("button", { name: "Зарегистрироваться" }));
+  expect((await screen.findByRole("alert")).textContent).toBe(
+    "Пароли не совпадают",
+  );
+  expect(writes).toHaveLength(0);
+  await user.clear(screen.getByLabelText("Повторите пароль"));
+  await user.type(
+    screen.getByLabelText("Повторите пароль"),
+    "new-long-password",
+  );
+  await user.click(screen.getByRole("button", { name: "Зарегистрироваться" }));
+  await screen.findByRole("heading", { name: "Покупки" });
+  expect(writes).toHaveLength(1);
+  expect(writes[0]).toMatchObject({
+    path: "/api/auth/register",
+    body: { username: "anna", password: "new-long-password" },
+  });
+  expect(Object.keys(writes[0].body as object)).toEqual([
+    "username",
+    "password",
+  ]);
+  expect(writes[0].device).toBeTruthy();
+  expect(
+    fetchMock.mock.calls.some(
+      ([request]) => new URL(request.url).pathname === "/api/auth/login",
+    ),
+  ).toBe(false);
+});
+
+test("duplicate registration stays on the form and shows the server error", async () => {
+  duplicateUser = true;
+  mount();
+  const user = userEvent.setup();
+  await user.click(
+    await screen.findByRole("button", {
+      name: "Нет аккаунта? Зарегистрироваться",
+    }),
+  );
+  await user.type(screen.getByLabelText("Логин"), "anna");
+  await user.type(screen.getByLabelText("Пароль"), "new-long-password");
+  await user.type(
+    screen.getByLabelText("Повторите пароль"),
+    "new-long-password",
+  );
+  await user.click(screen.getByRole("button", { name: "Зарегистрироваться" }));
+  expect((await screen.findByRole("alert")).textContent).toContain(
+    "уже существует",
+  );
+  expect((screen.getByLabelText("Логин") as HTMLInputElement).value).toBe(
+    "anna",
+  );
+  expect(screen.queryByRole("heading", { name: "Покупки" })).toBeNull();
 });
 
 function mount() {

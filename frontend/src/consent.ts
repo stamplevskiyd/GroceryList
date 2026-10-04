@@ -37,6 +37,8 @@ async function startConsent(): Promise<void> {
     return;
   }
   let busy = false;
+  element<HTMLAnchorElement>("#consent-register").href =
+    `/?register=1&consent=${encodeURIComponent(requestId)}`;
 
   function showError(error: unknown): void {
     status.textContent =

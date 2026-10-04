@@ -34,6 +34,14 @@ function Brand() {
 
 function Login({ onLogin }: { onLogin: (me: Me) => void }) {
   const login = $api.useMutation("post", "/api/auth/login");
+  const registration = $api.useMutation("post", "/api/auth/register");
+  const [registering, setRegistering] = useState(
+    () => new URLSearchParams(location.search).get("register") === "1",
+  );
+  const [validationError, setValidationError] = useState("");
+  const submitting = useRef(false);
+  const busy = login.isPending || registration.isPending;
+  const active = registering ? registration : login;
   return (
     <div className="app-login">
       <Brand />
@@ -44,12 +52,23 @@ function Login({ onLogin }: { onLogin: (me: Me) => void }) {
         Покупки для ваших планов на ужин и походов в магазин.
       </p>
       <form
+        key={registering ? "register" : "login"}
         onSubmit={async (event) => {
           event.preventDefault();
+          if (submitting.current) return;
           const form = event.currentTarget;
           const values = new FormData(form);
+          setValidationError("");
+          if (
+            registering &&
+            values.get("password") !== values.get("confirm_password")
+          ) {
+            setValidationError("Пароли не совпадают");
+            return;
+          }
+          submitting.current = true;
           try {
-            const me = await login.mutateAsync({
+            const me = await active.mutateAsync({
               params: { header: deviceHeaders },
               body: {
                 username: String(values.get("username")),
@@ -60,6 +79,8 @@ function Login({ onLogin }: { onLogin: (me: Me) => void }) {
             onLogin(me);
           } catch {
             /* Display the typed mutation error below. */
+          } finally {
+            submitting.current = false;
           }
         }}
       >
@@ -78,22 +99,61 @@ function Login({ onLogin }: { onLogin: (me: Me) => void }) {
           <input
             name="password"
             type="password"
-            autoComplete="current-password"
+            autoComplete={registering ? "new-password" : "current-password"}
+            minLength={registering ? 8 : undefined}
+            maxLength={registering ? 128 : undefined}
+            aria-describedby={registering ? "password-hint" : undefined}
             required
           />
         </label>
-        {login.isError && (
+        {registering && (
+          <>
+            <p id="password-hint" className="app-muted app-small">
+              От 8 до 128 символов. После регистрации у вас появится личный
+              список покупок.
+            </p>
+            <label>
+              Повторите пароль
+              <input
+                name="confirm_password"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={128}
+                required
+              />
+            </label>
+          </>
+        )}
+        {(validationError || active.isError) && (
           <p role="alert" className="app-error">
-            {errorMessage(login.error)}
+            {validationError || errorMessage(active.error)}
           </p>
         )}
-        <button className="app-primary" disabled={login.isPending}>
-          {login.isPending ? "Входим…" : "Войти"}
+        <button className="app-primary" disabled={busy}>
+          {busy
+            ? registering
+              ? "Создаём аккаунт…"
+              : "Входим…"
+            : registering
+              ? "Зарегистрироваться"
+              : "Войти"}
         </button>
       </form>
-      <p className="app-muted app-small">
-        Используйте учётную запись GroceryList, созданную ранее.
-      </p>
+      <button
+        className="app-auth-switch"
+        disabled={busy}
+        onClick={() => {
+          setRegistering((value) => !value);
+          setValidationError("");
+          login.reset();
+          registration.reset();
+        }}
+      >
+        {registering
+          ? "Уже есть аккаунт? Войти"
+          : "Нет аккаунта? Зарегистрироваться"}
+      </button>
     </div>
   );
 }
@@ -506,6 +566,11 @@ export function App() {
   return (
     <Login
       onLogin={(user) => {
+        const consentId = new URLSearchParams(location.search).get("consent");
+        if (consentId && /^[0-9a-f-]{36}$/i.test(consentId)) {
+          location.assign(`/consent?request=${encodeURIComponent(consentId)}`);
+          return;
+        }
         cache.setQueryData(["get", "/api/me"], user);
         setSignedOut(false);
       }}

@@ -42,7 +42,8 @@ uv run python -m grocery create-user anna
 история событий и публикация после коммита во внутренний SSE-хаб. Доступны cookie-вход
 и [REST API позиций и тегов с SSE-обновлениями](docs/api.md). MCP `/mcp` принимает персональные токены (PAT); управление токенами — через REST API.
 PWA и OAuth идут последующими этапами плана. Runtime `v0.1.1` запущен на VPS;
-публичный HTTPS пока ожидает исправления маршрутизации домена — [статус деплоя](docs/deployment.md).
+публичный адрес — **https://grocery.94-159-101-162.sslip.io**,
+[Swagger](https://grocery.94-159-101-162.sslip.io/docs), [статус деплоя](docs/deployment.md).
 
 Cookie-сессии всегда `Secure`, `HttpOnly`, `SameSite=Lax`. Для ручного входа и запросов
 с cookie используйте HTTPS base URL (тестовый хост либо локальный HTTPS-прокси),
@@ -131,8 +132,8 @@ OAuth-подключение claude.ai/ChatGPT появится на этапе 
 ## Контейнер backend и бэкапы (этап 5)
 
 Образ backend и бэкапы проверены; Caddy, статика и CI/CD работают на VPS. GitHub Actions
-собрал и опубликовал `v0.1.1`; контейнеры запущены, внешний health заблокирован настройкой
-домена. Проверка HTTPS, MCP/SSE через прокси и production-приёмка остаются
+собрал, опубликовал и развернул `v0.1.1`; внешний HTTPS, cookie-вход, PAT, MCP и SSE
+через Caddy проверены. Ручная браузерная приёмка и подключение Claude Code остаются
 в [плане этапа 5](docs/superpowers/plans/2026-10-03-05-deploy-and-cd.md).
 После создания `.env` из `.env.example`:
 
